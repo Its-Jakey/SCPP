@@ -12,12 +12,14 @@ public class Function {
 
     final String returnVariable;
     final String name;
+    private final String variablePrefix;
 
     public Function(String name, List<String> arguments, boolean isPublic, String variablePrefix) {
         this.arguments = new LinkedHashMap<>();
         this.localVariables = new LinkedHashMap<>();
         this.isPublic = isPublic;
         this.name = name;
+        this.variablePrefix = variablePrefix;
         this.returnVariable = variablePrefix + name + "_return";
 
         for (String arg : arguments)
@@ -26,11 +28,13 @@ public class Function {
 
     public void call(List<SCPPParser.ExpressionContext> args) {
         checkArgumentCount(args, false);
+        List<String> argumentList = arguments.values().stream().toList();
 
         for (int i = 0; i < Math.min(args.size(), arguments.size()); i++) {
-            Compiler.evaluateExpression(args.get(i));
-            Compiler.appendLine("storeAtVar\n" + arguments.values().stream().toList().get(i)); //TODO: Optimize this
+            Evaluators.evaluateExpression(args.get(i));
+            Compiler.appendLine("storeAtVar\n" + argumentList.get(i)); //TODO: Optimize this
         }
+        Compiler.appendLine("jts\n%" + variablePrefix + name + "%");
     }
 
     public void checkArgumentCount(List<SCPPParser.ExpressionContext> args, boolean failsafe) {

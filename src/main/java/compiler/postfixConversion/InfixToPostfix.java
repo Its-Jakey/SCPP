@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Stack;
 
 import static compiler.Compiler.appendLine;
-import static compiler.Compiler.evaluateValue;
+import static compiler.Evaluators.evaluateValue;
 
 public class InfixToPostfix {
     private static int precedence(ValueOrOperatorOrID op){

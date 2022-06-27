@@ -8,6 +8,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import java.util.List;
 
 import static compiler.Compiler.*;
+import static compiler.Evaluators.evaluateExpression;
 
 public class Builtins extends Namespace {
     public Builtins() {
@@ -76,7 +77,13 @@ public class Builtins extends Namespace {
 
         @Override
         public void call(List<SCPPParser.ExpressionContext> args) {
-            StringBuilder asm = new StringBuilder(StringEscapeUtils.escapeJava(args.get(0).getText().substring(1).substring(args.get(0).getText().length() - 1)));
+            if (args.size() < 1) {
+                error("_asm_ takes at least 1 argument, but 0 were given");
+                return;
+            }
+            String command = args.get(0).getText();
+
+            StringBuilder asm = new StringBuilder(StringEscapeUtils.escapeJava(command.substring(1, command.length() - 1)));
             for (int i = 1; i < args.size(); i++) {
                 evaluateExpression(args.get(i));
                 appendLine("storeAtVar\nasmExpression" + i);
@@ -85,6 +92,7 @@ public class Builtins extends Namespace {
             }
 
             appendLine(asm);
+            appendLine("storeAtVar\n" + super.returnVariable);
         }
     }
 
@@ -98,7 +106,7 @@ public class Builtins extends Namespace {
         public void call(List<SCPPParser.ExpressionContext> args) {
             super.checkArgumentCount(args, false);
 
-            Compiler.evaluateExpression(args.get(0));
+            Evaluators.evaluateExpression(args.get(0));
             Compiler.appendLine("storeAtVar\nmallocWords");
             Compiler.appendLine("malloc\nmallocWords");
             Compiler.appendLine("storeAtVar\n" + super.returnVariable);
