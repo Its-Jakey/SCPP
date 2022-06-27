@@ -1,0 +1,18 @@
+ldi
+1
+storeAtVar
+ONE
+jmp
+14
+jmp
+13
+ldi
+Hello World
+println
+ret
+ret
+jts
+7
+jts
+9
+done
