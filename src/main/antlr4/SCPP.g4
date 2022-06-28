@@ -17,7 +17,7 @@ bracketStatement
 | forLoop;
 
 namespaceDeclaration
-: pub='public'? 'namespace' ID codeBlock;
+: pub='public'? 'namespace' ID (codeBlock | 'is' ID ';');
 
 functionDeclaration
 : pub='public'? 'func' ID '(' functionArgumentArray? ')' codeBlock;

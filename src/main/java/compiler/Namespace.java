@@ -1,5 +1,7 @@
 package compiler;
 
+import antlr.SCPPParser;
+
 import java.util.LinkedHashMap;
 
 public class Namespace {
@@ -7,6 +9,8 @@ public class Namespace {
     LinkedHashMap<String, Function> functions;
     boolean isPubic;
     String name;
+    SCPPParser.NamespaceDeclarationContext context = null;
+    String fileName = "";
 
     public Namespace(String name, boolean isPublic) {
         this.name = name;

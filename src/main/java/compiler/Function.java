@@ -13,6 +13,7 @@ public class Function {
     final String returnVariable;
     final String name;
     private final String variablePrefix;
+    SCPPParser.FunctionDeclarationContext context = null;
 
     public Function(String name, List<String> arguments, boolean isPublic, String variablePrefix) {
         this.arguments = new LinkedHashMap<>();

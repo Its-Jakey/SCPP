@@ -13,15 +13,18 @@ public class Getters {
         return namespaces.get(name);
     }
 
+    static String last = "";
+
     static boolean hasConstant(String name) {
+        last = fileName + "@" + name;
         return constants.containsKey(fileName + "@" + name);
     }
 
-    static int getConstant(String name) {
+    static String getConstant(String name) {
         return constants.get(fileName + "@" + name);
     }
 
-    static void addConstant(String name, int value) {
+    static void addConstant(String name, String value) {
         if (hasConstant(name))
             errorAndKill("Duplicate constant '" + name + "'");
         constants.put(fileName + "@" + name, value);

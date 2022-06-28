@@ -9,8 +9,10 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -29,7 +31,8 @@ public class Compiler implements SCPPListener {
     private static Stack<Integer> tempStack;
     private static int tempN = 0;
     static final Builtins builtins = new Builtins();
-    static LinkedHashMap<String, Integer> constants;
+    static LinkedHashMap<String, String> constants;
+    public static boolean showLogs = false;
 
     public static String getPrefixMessage() {
         return fileName + " " + row + ":" + col;
@@ -41,7 +44,12 @@ public class Compiler implements SCPPListener {
     public static void errorAndKill(String msg) {
         error(msg);
         printMessages();
-        throw new RuntimeException();
+        System.exit(1);
+    }
+
+    static void log(Object msg) {
+        if (showLogs)
+            System.out.println("Log:\t" + msg);
     }
     public static void warn(String msg) {
         messages.add(getPrefixMessage() + " warning: " + msg);
@@ -55,7 +63,7 @@ public class Compiler implements SCPPListener {
         messages.forEach(System.out::println);
     }
 
-    private static void runWalker(CharStream stream) throws Exception{
+    private static void runWalker(CharStream stream) {
         SCPPLexer lexer = new SCPPLexer(stream);
         SCPPParser parser = new SCPPParser(new CommonTokenStream(lexer));
         ParseTreeWalker walker = new ParseTreeWalker();
@@ -63,19 +71,15 @@ public class Compiler implements SCPPListener {
         walker.walk(new Compiler(), parser.program());
     }
 
-    public static String compile(Path file){
+    public static String compile(Path file) throws IOException {
         long startTime = System.currentTimeMillis();
 
         init();
         fileName = file.getFileName().toString();
 
-        try {
-            runWalker(CharStreams.fromPath(file));
-            printMessages();
+        runWalker(CharStreams.fromPath(file));
+        printMessages();
 
-        } catch (Throwable e) {
-            failed = true;
-        }
         end();
         long time = System.currentTimeMillis() - startTime;
 
@@ -103,6 +107,11 @@ public class Compiler implements SCPPListener {
         fileName = filenameBackup;
         currentNamespace = namespaceBackup;
         currentFunction = functionBackup;
+    }
+
+    private static void compileContext(ParserRuleContext ctx) {
+        ParseTreeWalker walker = new ParseTreeWalker();
+        walker.walk(new Compiler(), ctx);
     }
 
     private static void init() {
@@ -199,19 +208,50 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterNamespaceDeclaration(SCPPParser.NamespaceDeclarationContext ctx) {
+        log("Entered namespace '" + ctx.ID(0).getText() + "'");
+
         if (currentNamespace != null)
             errorAndKill("Cannot declare namespace from inside of namespace");
-        if (namespaces.containsKey(ctx.ID().getText()))
-            errorAndKill("Duplicate namespace '" + ctx.ID().getText() + "'");
-        currentNamespace = new Namespace(ctx.ID().getText(), ctx.pub != null);
+        if (namespaces.containsKey(ctx.ID(0).getText()))
+            errorAndKill("Duplicate namespace '" + ctx.ID(0).getText() + "'");
+
+        if (ctx.codeBlock() == null) {
+            if (!namespaces.containsKey(ctx.ID(1).getText()))
+                error("Unknown namespace '" + ctx.ID(1).getText() + "'");
+            else {
+                Namespace namespace = namespaces.get(ctx.ID(1).getText());
+
+                if (namespace.context.codeBlock() == null)
+                    error("Namespaces cannot be cloned from a namespace that is not a source (wut am I trying to say here)");
+                else {
+                    TerminalNode newId = new TerminalNodeImpl(new CommonToken(SCPPParser.ID, ctx.ID(0).getText()));
+
+                    //namespace.ID().set(0, newId); //Not changing ID
+                    namespace.context.children.set(0, newId);
+
+                    String fileNameBackup = fileName.substring(0);
+                    fileName = namespace.fileName.substring(0);
+                    compileContext(namespace.context);
+
+                    fileName = fileNameBackup;
+                }
+            }
+            return;
+        }
+        currentNamespace = new Namespace(ctx.ID(0).getText(), ctx.pub != null);
+        currentNamespace.context = ctx;
+        currentNamespace.fileName = fileName;
         appendLine(":" + currentNamespace.name);
     }
 
     @Override
     public void exitNamespaceDeclaration(SCPPParser.NamespaceDeclarationContext ctx) {
-        namespaces.put(currentNamespace.name, currentNamespace);
-        currentNamespace = null;
-        appendLine("ret");
+        if (ctx.codeBlock() != null) {
+            namespaces.put(currentNamespace.name, currentNamespace);
+            currentNamespace = null;
+            appendLine("ret");
+        }
+        log("Exited namespace '" + ctx.ID(0).getText() + "'");
     }
 
     @Override
@@ -226,6 +266,7 @@ public class Compiler implements SCPPListener {
         if (currentNamespace.functions.containsKey(Function.getID(name, args.size())) || builtins.functions.containsKey(Function.getID(name, args.size())))
             errorAndKill("Duplicate function '" + name);
         currentFunction = new Function(name, args, ctx.pub != null, currentNamespace.name + "_");
+        currentFunction.context = ctx;
 
         appendLine("jmp\n%" + currentNamespace.name + "_" + name + "_end%");
         appendLine(":" + currentNamespace.name + "_" + name);
@@ -353,7 +394,7 @@ public class Compiler implements SCPPListener {
             if (currentNamespace.variables.containsKey(ctx.ID().getText()))
                 error("Duplicate variable '" + ctx.ID().getText() + "'");
             varName = currentNamespace.name + "_" + ctx.ID().getText();
-            currentNamespace.variables.put(varName, new Variable(varName, ctx.pub != null));
+            currentNamespace.variables.put(ctx.ID().getText(), new Variable(varName, ctx.pub != null));
         }
         evaluateExpression(ctx.expression());
         appendLine("storeAtVar\n" + varName);
@@ -424,7 +465,8 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitDefineDirective(SCPPParser.DefineDirectiveContext ctx) {
-        addConstant(ctx.ID().getText(), Integer.parseInt(ctx.INT().getText()));
+        addConstant(ctx.ID().getText(), ctx.INT().getText());
+        log("Constant '" + ctx.ID().getText() + "' defined");
     }
 
     @Override

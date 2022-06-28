@@ -7,6 +7,8 @@ Numeric literals can be written in the following ways:
     1234
     12.24
     .1234
+    -1234
+    -12.24
     0x1234 //hexadecimal
     0b0111 //binary
 
@@ -124,6 +126,11 @@ When you define a function or global variable with the 'public' keyword prefix, 
 or
 
     var x = otherNamespace::globalVariable;
+
+You can also make a duplicate of a namespace with the 'is' keyword
+
+    namespace space {code...}
+    namespace newNamespace is space //Creates a duplicate of 'space' named 'newNamespace'
 
 ## If and While loops
 

@@ -93,9 +93,9 @@ public class Evaluators {
         else if (ctx.INT() != null)
             appendLine("ldi\n" + ctx.INT().getText());
         else if (ctx.HEX() != null)
-            appendLine("ldi\n" + Integer.parseInt(ctx.HEX().getText(), 16));
+            appendLine("ldi\n" + Integer.parseInt(ctx.HEX().getText().substring(2), 16));
         else if (ctx.BIN() != null)
-            appendLine("ldi\n" + Integer.parseInt(ctx.BIN().getText(), 2));
+            appendLine("ldi\n" + Integer.parseInt(ctx.BIN().getText().substring(2), 2));
         else
             assignArgumentArrayToArray(ctx.argumentArray());
     }
