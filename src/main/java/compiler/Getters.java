@@ -8,26 +8,26 @@ import static compiler.Compiler.*;
 
 public class Getters {
     static Namespace getNamespace(String name) {
-        if (!namespaces.containsKey(name))
+        if (!currentProgram.namespaces.containsKey(name))
             errorAndKill("Unknown namespace '" + name + "'");
-        return namespaces.get(name);
+        return currentProgram.namespaces.get(name);
     }
 
     static String last = "";
 
     static boolean hasConstant(String name) {
-        last = fileName + "@" + name;
-        return constants.containsKey(fileName + "@" + name);
+        last = currentProgram.fileName + "@" + name;
+        return constants.containsKey(currentProgram.fileName + "@" + name);
     }
 
     static String getConstant(String name) {
-        return constants.get(fileName + "@" + name);
+        return constants.get(currentProgram.fileName + "@" + name);
     }
 
     static void addConstant(String name, String value) {
         if (hasConstant(name))
             errorAndKill("Duplicate constant '" + name + "'");
-        constants.put(fileName + "@" + name, value);
+        constants.put(currentProgram.fileName + "@" + name, value);
     }
 
     static Variable getVariable(Namespace namespace, Function function, String name) {
@@ -35,7 +35,7 @@ public class Getters {
             errorAndKill("Variable '" + name + "' was requested outside of namespace.");
 
         if (function == null || !(function.arguments.containsKey(name) || function.localVariables.containsKey(name))) {
-            if (namespace.variables.containsKey(name))
+            if (namespace.variables.containsKey(name) && (namespace.equals(currentProgram.currentNamespace) || namespace.variables.get(name).isPublic()))
                 return namespace.variables.get(name);
             if (!hasConstant(name))
                 errorAndKill("Unknown variable '" + name + "'");
@@ -53,7 +53,7 @@ public class Getters {
             errorAndKill("Function '" + name + "' was requested outside of namespace");
         if (builtins.functions.containsKey(Function.getID(name, args)))
             return builtins.functions.get(Function.getID(name, args));
-        if (!namespace.functions.containsKey(Function.getID(name, args)))
+        if (!namespace.functions.containsKey(Function.getID(name, args)) || (!namespace.equals(currentProgram.currentNamespace) && !namespace.functions.get(Function.getID(name, args)).isPublic))
             errorAndKill("Unknown function '" + name + "'");
         return namespace.functions.get(Function.getID(name, args));
     }

@@ -3,14 +3,11 @@ package compiler;
 import antlr.SCPPLexer;
 import antlr.SCPPListener;
 import antlr.SCPPParser;
-import compiler.postfixConversion.InfixToPostfix;
-import compiler.postfixConversion.ValueOrOperatorOrID;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,25 +19,24 @@ import static compiler.Evaluators.*;
 public class Compiler implements SCPPListener {
     private static StringBuilder output;
     private static boolean failed;
-    static String fileName = null;
     private static int row, col;
     private static List<String> messages;
-    static LinkedHashMap<String, Namespace> namespaces;
-    static Namespace currentNamespace;
-    static Function currentFunction;
     private static Stack<Integer> tempStack;
     private static int tempN = 0;
     static final Builtins builtins = new Builtins();
     static LinkedHashMap<String, String> constants;
     public static boolean showLogs = false;
+    static Program currentProgram;
 
     public static String getPrefixMessage() {
-        return fileName + " " + row + ":" + col;
+        return currentProgram.fileName + " " + row + ":" + col;
     }
+
     public static void error(String msg) {
         messages.add(getPrefixMessage() + " error: " + msg);
         failed = true;
     }
+
     public static void errorAndKill(String msg) {
         error(msg);
         printMessages();
@@ -51,6 +47,7 @@ public class Compiler implements SCPPListener {
         if (showLogs)
             System.out.println("Log:\t" + msg);
     }
+
     public static void warn(String msg) {
         messages.add(getPrefixMessage() + " warning: " + msg);
     }
@@ -75,7 +72,8 @@ public class Compiler implements SCPPListener {
         long startTime = System.currentTimeMillis();
 
         init();
-        fileName = file.getFileName().toString();
+        currentProgram = new Program(file.getFileName().toString());
+        currentProgram.isTopLevel = true;
 
         runWalker(CharStreams.fromPath(file));
         printMessages();
@@ -86,27 +84,27 @@ public class Compiler implements SCPPListener {
         if (failed) {
             printMessages();
             System.err.println("Build failed in " + time / 1000d + " seconds");
-        }
-        else
+        } else
             System.out.println("Build succeeded in " + time / 1000d + " seconds");
         return getOutput();
     }
 
     private static void compileLowerLevel(Path file) {
-        String filenameBackup = fileName.substring(0);
-        Namespace namespaceBackup = currentNamespace;
-        Function functionBackup = currentFunction;
-        fileName = file.getFileName().toString();
+        Program programBackup = currentProgram.clone();
+
+        currentProgram = new Program(file.getFileName().toString());
 
         try {
             runWalker(CharStreams.fromPath(file));
         } catch (Exception e) {
-            errorAndKill("Failed to compile file '" + fileName + "', " + e.getMessage());
+            errorAndKill("Failed to compile file '" + currentProgram.fileName + "', " + e.getMessage());
             failed = true;
         }
-        fileName = filenameBackup;
-        currentNamespace = namespaceBackup;
-        currentFunction = functionBackup;
+        for (Map.Entry<String, Namespace> newSpace : currentProgram.namespaces.entrySet()) {
+            if (!programBackup.namespaces.containsKey(newSpace.getKey()) && newSpace.getValue().isPubic)
+                programBackup.namespaces.put(newSpace.getKey(), newSpace.getValue());
+        }
+        currentProgram = programBackup;
     }
 
     private static void compileContext(ParserRuleContext ctx) {
@@ -116,22 +114,20 @@ public class Compiler implements SCPPListener {
 
     private static void init() {
         tempN = 0;
-        currentNamespace = null;
-        currentFunction = null;
         failed = false;
         output = new StringBuilder();
         messages = new ArrayList<>();
-        namespaces = new LinkedHashMap<>();
         constants = new LinkedHashMap<>();
         tempStack = new Stack<>();
 
         appendLine("jmp\n%ENTRY%");
     }
+
     private static void end() {
         appendLine(":ENTRY");
         Namespace mainNamespace = null;
 
-        for (Namespace namespace : namespaces.values()) {
+        for (Namespace namespace : currentProgram.namespaces.values()) {
             appendLine("jts\n%" + namespace.name + "%");
 
             if (namespace.functions.containsKey(Function.getID("main", 0)) && namespace.functions.get(Function.getID("main", 0)).isPublic)
@@ -147,13 +143,13 @@ public class Compiler implements SCPPListener {
         output.append("\n").append(line);
     }
 
-    public static String getOutput(){
+    public static String getOutput() {
         if (output.length() == 0)
             return "";
         return Assembler.assemble(output.substring(1));
     }
 
-    public static String getRawOutput(){
+    public static String getRawOutput() {
         if (output.length() == 0)
             return "";
         return output.substring(1);
@@ -171,7 +167,7 @@ public class Compiler implements SCPPListener {
     }
 
     private static void checkInFunction(String keyword) {
-        if (currentFunction == null)
+        if (currentProgram.currentFunction == null)
             errorAndKill("Cannot use '" + keyword + "' keyword outside of function scope");
     }
 
@@ -210,16 +206,16 @@ public class Compiler implements SCPPListener {
     public void enterNamespaceDeclaration(SCPPParser.NamespaceDeclarationContext ctx) {
         log("Entered namespace '" + ctx.ID(0).getText() + "'");
 
-        if (currentNamespace != null)
+        if (currentProgram.currentNamespace != null)
             errorAndKill("Cannot declare namespace from inside of namespace");
-        if (namespaces.containsKey(ctx.ID(0).getText()))
+        if (currentProgram.namespaces.containsKey(ctx.ID(0).getText()))
             errorAndKill("Duplicate namespace '" + ctx.ID(0).getText() + "'");
 
         if (ctx.codeBlock() == null) {
-            if (!namespaces.containsKey(ctx.ID(1).getText()))
+            if (!currentProgram.namespaces.containsKey(ctx.ID(1).getText()))
                 error("Unknown namespace '" + ctx.ID(1).getText() + "'");
             else {
-                Namespace namespace = namespaces.get(ctx.ID(1).getText());
+                Namespace namespace = currentProgram.namespaces.get(ctx.ID(1).getText());
 
                 if (namespace.context.codeBlock() == null)
                     error("Namespaces cannot be cloned from a namespace that is not a source (wut am I trying to say here)");
@@ -229,26 +225,26 @@ public class Compiler implements SCPPListener {
                     //namespace.ID().set(0, newId); //Not changing ID
                     namespace.context.children.set(0, newId);
 
-                    String fileNameBackup = fileName.substring(0);
-                    fileName = namespace.fileName.substring(0);
+                    String fileNameBackup = currentProgram.fileName.substring(0);
+                    currentProgram.fileName = namespace.fileName.substring(0);
                     compileContext(namespace.context);
 
-                    fileName = fileNameBackup;
+                    currentProgram.fileName = fileNameBackup;
                 }
             }
             return;
         }
-        currentNamespace = new Namespace(ctx.ID(0).getText(), ctx.pub != null);
-        currentNamespace.context = ctx;
-        currentNamespace.fileName = fileName;
-        appendLine(":" + currentNamespace.name);
+        currentProgram.currentNamespace = new Namespace(ctx.ID(0).getText(), ctx.pub != null);
+        currentProgram.currentNamespace.context = ctx;
+        currentProgram.currentNamespace.fileName = currentProgram.fileName;
+        appendLine(":" + currentProgram.currentNamespace.name);
     }
 
     @Override
     public void exitNamespaceDeclaration(SCPPParser.NamespaceDeclarationContext ctx) {
         if (ctx.codeBlock() != null) {
-            namespaces.put(currentNamespace.name, currentNamespace);
-            currentNamespace = null;
+            currentProgram.namespaces.put(currentProgram.currentNamespace.name, currentProgram.currentNamespace);
+            currentProgram.currentNamespace = null;
             appendLine("ret");
         }
         log("Exited namespace '" + ctx.ID(0).getText() + "'");
@@ -256,28 +252,28 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterFunctionDeclaration(SCPPParser.FunctionDeclarationContext ctx) {
-        if (currentFunction != null)
+        if (currentProgram.currentFunction != null)
             errorAndKill("Cannot define function from inside of function");
-        if (currentNamespace == null)
+        if (currentProgram.currentNamespace == null)
             errorAndKill("Cannot define function from outside of namespace");
         List<String> args = evaluateFunctionArgumentArray(ctx.functionArgumentArray());
         String name = ctx.ID().getText();
 
-        if (currentNamespace.functions.containsKey(Function.getID(name, args.size())) || builtins.functions.containsKey(Function.getID(name, args.size())))
+        if (currentProgram.currentNamespace.functions.containsKey(Function.getID(name, args.size())) || builtins.functions.containsKey(Function.getID(name, args.size())))
             errorAndKill("Duplicate function '" + name);
-        currentFunction = new Function(name, args, ctx.pub != null, currentNamespace.name + "_");
-        currentFunction.context = ctx;
+        currentProgram.currentFunction = new Function(name, args, ctx.pub != null, currentProgram.currentNamespace.name + "_");
+        currentProgram.currentFunction.context = ctx;
 
-        appendLine("jmp\n%" + currentNamespace.name + "_" + name + "_end%");
-        appendLine(":" + currentNamespace.name + "_" + name);
+        appendLine("jmp\n%" + currentProgram.currentNamespace.name + "_" + name + "_end%");
+        appendLine(":" + currentProgram.currentNamespace.name + "_" + name);
     }
 
     @Override
     public void exitFunctionDeclaration(SCPPParser.FunctionDeclarationContext ctx) {
-        currentNamespace.functions.put(currentFunction.getID(), currentFunction);
+        currentProgram.currentNamespace.functions.put(currentProgram.currentFunction.getID(), currentProgram.currentFunction);
         appendLine("ret");
-        appendLine(":" + currentNamespace.name + "_" + currentFunction.name + "_end");
-        currentFunction = null;
+        appendLine(":" + currentProgram.currentNamespace.name + "_" + currentProgram.currentFunction.name + "_end");
+        currentProgram.currentFunction = null;
     }
 
     @Override
@@ -314,9 +310,9 @@ public class Compiler implements SCPPListener {
         checkInFunction("for");
         String idxName = ctx.ID().getText();
 
-        if (currentFunction.localVariables.containsKey(idxName) || currentFunction.arguments.containsKey(idxName))
+        if (currentProgram.currentFunction.localVariables.containsKey(idxName) || currentProgram.currentFunction.arguments.containsKey(idxName))
             errorAndKill("Duplicate variable '" + idxName + "'");
-        String varName = currentNamespace.name + "_" + currentFunction.name + "_" + idxName;
+        String varName = currentProgram.currentNamespace.name + "_" + currentProgram.currentFunction.name + "_" + idxName;
 
         evaluateExpression(ctx.expression(0));
         appendLine("storeAtVar\n" + varName);
@@ -335,7 +331,7 @@ public class Compiler implements SCPPListener {
         appendLine("largerThanOrEqualWithVar\n" + highValueName);
         appendLine("jt\n%" + createTemp() + "%");
 
-        currentFunction.localVariables.put(ctx.ID().getText(), varName);
+        currentProgram.currentFunction.localVariables.put(ctx.ID().getText(), varName);
 
         /*
         tempStack
@@ -350,7 +346,7 @@ public class Compiler implements SCPPListener {
     @Override
     public void exitForLoop(SCPPParser.ForLoopContext ctx) {
         String forEnd = endTemp(), boundsCheck = endTemp();
-        String varName = currentFunction.localVariables.get(ctx.ID().getText());
+        String varName = currentProgram.currentFunction.localVariables.get(ctx.ID().getText());
 
         if (ctx.expression().size() > 2) { //TODO: Add "changeVarBy" instruction
             appendLine("loadAtVar\n" + endTemp());
@@ -361,7 +357,7 @@ public class Compiler implements SCPPListener {
         appendLine("jmp\n%" + boundsCheck + "%");
         appendLine(":" + forEnd);
 
-        currentFunction.localVariables.remove(ctx.ID().getText());
+        currentProgram.currentFunction.localVariables.remove(ctx.ID().getText());
     }
 
     @Override
@@ -381,20 +377,20 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitVariableDeclaration(SCPPParser.VariableDeclarationContext ctx) {
-        if (currentNamespace == null)
+        if (currentProgram.currentNamespace == null)
             error("Cannot define variable outside of namespace bounds");
         String varName;
-        if (currentFunction != null) {
-            if (currentFunction.localVariables.containsKey(ctx.ID().getText()) || currentFunction.arguments.containsKey(ctx.ID().getText()))
+        if (currentProgram.currentFunction != null) {
+            if (currentProgram.currentFunction.localVariables.containsKey(ctx.ID().getText()) || currentProgram.currentFunction.arguments.containsKey(ctx.ID().getText()))
                 error("Duplicate variable '" + ctx.ID().getText() + "'");
 
-            varName = currentNamespace.name + "_" + currentFunction.name + "_" + ctx.ID().getText();
-            currentFunction.localVariables.put(ctx.ID().getText(), varName);
+            varName = currentProgram.currentNamespace.name + "_" + currentProgram.currentFunction.name + "_" + ctx.ID().getText();
+            currentProgram.currentFunction.localVariables.put(ctx.ID().getText(), varName);
         } else {
-            if (currentNamespace.variables.containsKey(ctx.ID().getText()))
+            if (currentProgram.currentNamespace.variables.containsKey(ctx.ID().getText()))
                 error("Duplicate variable '" + ctx.ID().getText() + "'");
-            varName = currentNamespace.name + "_" + ctx.ID().getText();
-            currentNamespace.variables.put(ctx.ID().getText(), new Variable(varName, ctx.pub != null));
+            varName = currentProgram.currentNamespace.name + "_" + ctx.ID().getText();
+            currentProgram.currentNamespace.variables.put(ctx.ID().getText(), new Variable(varName, ctx.pub != null));
         }
         evaluateExpression(ctx.expression());
         appendLine("storeAtVar\n" + varName);
@@ -407,7 +403,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitVariableValueChange(SCPPParser.VariableValueChangeContext ctx) {
-        if (currentFunction == null)
+        if (currentProgram.currentFunction == null)
             errorAndKill("Cannot change variable value outside of function bounds.");
         Variable var;
         SCPPParser.VariableContext variable = ctx.variable();
@@ -415,11 +411,15 @@ public class Compiler implements SCPPListener {
         if (ctx.variable().variable() != null)
             var = getVariable(getNamespace(variable.ID().getText()), null, variable.variable().getText());
         else
-            var = getVariable(currentNamespace, currentFunction, variable.ID().getText());
+            var = getVariable(currentProgram.currentNamespace, currentProgram.currentFunction, variable.ID().getText());
 
         if (ctx.VARIABLE_SINGLE_MODIFIER() != null || ctx.VARIABLE_MODIFIER() != null) //TODO: Implement variable single modifiers
             error("++, --, +=, -=, *=, and /= have not been implemented yet");
         else {
+            if (ctx.arrayIndex() != null) {
+                setValueAtArrayIndex(var.id(), ctx.arrayIndex(), ctx.expression());
+                return;
+            }
             evaluateExpression(ctx.expression());
             appendLine("storeAtVar\n" + var.id());
         }
@@ -445,7 +445,7 @@ public class Compiler implements SCPPListener {
     public void exitReturnStatement(SCPPParser.ReturnStatementContext ctx) {
         checkInFunction("return");
         evaluateExpression(ctx.expression());
-        appendLine("storeAtVar\n" + currentFunction.returnVariable);
+        appendLine("storeAtVar\n" + currentProgram.currentFunction.returnVariable);
     }
 
     @Override

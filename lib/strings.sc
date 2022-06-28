@@ -1,4 +1,4 @@
-namespace strings {
+public namespace strings {
     public func charAt(string, idx) {
         return _asm_("charAt", string, idx);
     }

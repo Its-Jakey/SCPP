@@ -1,5 +1,5 @@
  
-namespace time {
+public namespace time {
     public func sleep(millis) {
         _asm_("sleep", millis);
     }

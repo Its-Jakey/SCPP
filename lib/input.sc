@@ -1,6 +1,6 @@
 
 
-namespace input {
+public namespace input {
     public func mouseX() {
         return _asm_("mouseX");
     }

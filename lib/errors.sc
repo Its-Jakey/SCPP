@@ -1,6 +1,6 @@
 
 
-namespace errors {
+public namespace errors {
     public func throw(message) {
         println(concat("Error: ", message));
         exit();

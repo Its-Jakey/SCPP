@@ -18,7 +18,7 @@ public class Builtins extends Namespace {
         addAllArgs(new _asm_());
         add(new malloc());
         add(new exit());
-        add(new concat());
+        addAllArgs(new concat());
     }
 
     private void addAllArgs(Function function) {

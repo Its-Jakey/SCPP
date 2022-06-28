@@ -1,6 +1,6 @@
 
 
-namespace graphics {
+public namespace graphics {
     public func putPixel(x, y) {
         _asm_("putPixel", x, y);
     }

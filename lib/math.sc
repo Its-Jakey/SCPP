@@ -1,4 +1,4 @@
-namespace math {
+public namespace math {
     public func round(x, places) {
         return _asm_("round", x, places);
     }

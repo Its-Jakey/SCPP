@@ -1,6 +1,6 @@
 #include <strings>
 
-namespace cloud {
+public namespace cloud {
     var chars = "[[[[[[[[[[_ abcdefghijklmnopqrstuvwxyz1234567890)(*&^%$#@!<>?,.";
 
     public func setVar(varName, value) {

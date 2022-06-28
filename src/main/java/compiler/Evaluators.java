@@ -5,6 +5,7 @@ import compiler.postfixConversion.InfixToPostfix;
 import compiler.postfixConversion.ValueOrOperatorOrID;
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.beans.Expression;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,12 @@ public class Evaluators {
     static void loadValueAtArrayIndex(String base, SCPPParser.ArrayIndexContext arrayIndex) {
         getValueAtIndex(base, arrayIndex, createTemp());
         endTemp();
+    }
+
+    static void setValueAtArrayIndex(String base, SCPPParser.ArrayIndexContext arrayIndex, SCPPParser.ExpressionContext value) {
+        getValueAtIndex(base, arrayIndex, createTemp());
+        evaluateExpression(value);
+        appendLine("setValueAtPointer\n" + endTemp());
     }
 
     static void getValueAtIndex(String array, SCPPParser.ArrayIndexContext index, String indexName) {
@@ -72,7 +79,7 @@ public class Evaluators {
                 if (variable.variable() != null)
                     varName = getVariable(getNamespace(variable.ID().getText()), null, variable.variable().ID().getText()).id();
                 else
-                    varName = getVariable(currentNamespace, currentFunction, variable.ID().getText()).id();
+                    varName = getVariable(currentProgram.currentNamespace, currentProgram.currentFunction, variable.ID().getText()).id();
             }
             else if (ctx.functionCall() != null) {
                 varName = evaluateFunctionCall(ctx.functionCall()).returnVariable;
@@ -119,13 +126,13 @@ public class Evaluators {
             ret = getFunction(getNamespace(variable.ID().getText()), variable.variable().ID().getText(), args);
         else if (builtins.functions.containsKey(Function.getID(variable.ID().getText(), args)))
             ret = builtins.functions.get(Function.getID(variable.ID().getText(), args));
-        else if (currentFunction != null && currentFunction.name.equals(variable.ID().getText()))
-            ret = currentFunction;
-        else if (!currentNamespace.functions.containsKey(Function.getID(variable.ID().getText(), args))) {
+        else if (currentProgram.currentFunction != null && currentProgram.currentFunction.name.equals(variable.ID().getText()))
+            ret = currentProgram.currentFunction;
+        else if (!currentProgram.currentNamespace.functions.containsKey(Function.getID(variable.ID().getText(), args))) {
             errorAndKill("Unknown function '" + variable.ID().getText() + "'");
         }
         else
-            ret = currentNamespace.functions.get(Function.getID(variable.ID().getText(), args));
+            ret = currentProgram.currentNamespace.functions.get(Function.getID(variable.ID().getText(), args));
         ret.call(args);
         return ret;
     }
