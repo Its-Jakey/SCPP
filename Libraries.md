@@ -19,6 +19,10 @@ This is technically not a library as it is available to all programs.
 > **exit();** Exits the program
 > 
 > **concat(args...)** Returns all the arguments combined into a string
+> 
+> **pack()** Returns all the variables in the current namespace as an array
+> 
+> **unpack(array)** Sets all the variables in the current namespaces to elements of array
 
 ## cloud
 
@@ -125,4 +129,49 @@ The strings library helps with editing strings
 The time library allows for timing operations to the nearest millisecond
 
 > **sleep(millis);** Waits until the current runtime length is millis longer
+> 
 > **getRuntimeMillis();** Returns the current length of the runtime in milliseconds
+
+## arrays
+
+The arrays library is used to modify array elements
+
+> **createSubArray(array, start, end)** Creates a new array from the elements of array at start to end
+> 
+> **createArrayCopy(array, size)** Returns a copy of array, size should be the size of the array
+> 
+> **resizeArray(array, oldSize, newSize)** Returns a copy of array with the size of newSize
+> 
+> **copyTo(array, newArray, len)** Copys the elements of array to newArray, len is the size of the input arrays
+
+## list
+
+The list library allows for easy storage of large amounts of data without having to create lots of variables
+
+> **add(item)** Adds item to the list of items
+> 
+> **get(index)** Returns the item at index
+> 
+> **remove(index)** Removes the item at index and moves the elements of the array down as to not leave an item slot empty
+> 
+> **size()** Returns the size of the list, max size of a list is 128
+> 
+> **toArray()** Returns the array of items in the list
+> 
+> **getArrayForm()** Returns an array of all the variables in the list
+> 
+> **loadFromArray()** Sets all the variables in the list to the elements in an array
+
+## map
+
+The map library is like the list library except the index of items can be values other than numbers
+
+> **put(key, value)** Adds the value to the list at key
+> 
+> **get(key)** Returns the value at key
+> 
+> **size()** Returns the amount of elements in the map, max size of a map is 128
+> 
+> **getArrayForm()** Returns an array of all the variables in the map
+> 
+> **loadFromArray()** Sets all the variables in the map to the elements in an array

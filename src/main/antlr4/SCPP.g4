@@ -20,7 +20,7 @@ namespaceDeclaration
 : pub='public'? 'namespace' ID (codeBlock | 'is' ID ';');
 
 functionDeclaration
-: pub='public'? 'func' ID '(' functionArgumentArray? ')' codeBlock;
+: pub='public'? inline='inline'? 'func' ID '(' functionArgumentArray? ')' codeBlock;
 
 ifStatement
 : 'if' '(' expression ')' codeBlock;

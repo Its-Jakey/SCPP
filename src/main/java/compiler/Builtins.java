@@ -141,7 +141,9 @@ public class Builtins extends Namespace {
 
             for (SCPPParser.ExpressionContext arg : args) {
                 evaluateExpression(arg);
-                appendLine("join\n" + super.returnVariable);
+                appendLine("storeAtVar\nconcatTmp");
+                appendLine("loadAtVar\n" + super.returnVariable);
+                appendLine("join\nconcatTmp");
                 appendLine("storeAtVar\n" + super.returnVariable);
             }
         }

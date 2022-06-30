@@ -3,6 +3,8 @@ package compiler;
 import antlr.SCPPLexer;
 import antlr.SCPPListener;
 import antlr.SCPPParser;
+import compiler.optimizer.Assembler;
+import compiler.optimizer.Optimizer;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -26,7 +28,9 @@ public class Compiler implements SCPPListener {
     static final Builtins builtins = new Builtins();
     static LinkedHashMap<String, String> constants;
     public static boolean showLogs = false;
+    public static boolean optimize = true;
     static Program currentProgram;
+    static List<String> includedFiles;
 
     public static String getPrefixMessage() {
         return currentProgram.fileName + " " + row + ":" + col;
@@ -86,7 +90,10 @@ public class Compiler implements SCPPListener {
             System.err.println("Build failed in " + time / 1000d + " seconds");
         } else
             System.out.println("Build succeeded in " + time / 1000d + " seconds");
-        return getOutput();
+        if (optimize)
+            return Assembler.assemble(Optimizer.optimize(getRawOutput()));
+        else
+            return getOutput();
     }
 
     private static void compileLowerLevel(Path file) {
@@ -107,7 +114,7 @@ public class Compiler implements SCPPListener {
         currentProgram = programBackup;
     }
 
-    private static void compileContext(ParserRuleContext ctx) {
+    static void compileContext(ParserRuleContext ctx) {
         ParseTreeWalker walker = new ParseTreeWalker();
         walker.walk(new Compiler(), ctx);
     }
@@ -119,6 +126,7 @@ public class Compiler implements SCPPListener {
         messages = new ArrayList<>();
         constants = new LinkedHashMap<>();
         tempStack = new Stack<>();
+        includedFiles = new ArrayList<>();
 
         appendLine("jmp\n%ENTRY%");
     }
@@ -237,6 +245,7 @@ public class Compiler implements SCPPListener {
         currentProgram.currentNamespace = new Namespace(ctx.ID(0).getText(), ctx.pub != null);
         currentProgram.currentNamespace.context = ctx;
         currentProgram.currentNamespace.fileName = currentProgram.fileName;
+        NamespaceBuiltins.addTo(currentProgram.currentNamespace);
         appendLine(":" + currentProgram.currentNamespace.name);
     }
 
@@ -262,16 +271,20 @@ public class Compiler implements SCPPListener {
         if (currentProgram.currentNamespace.functions.containsKey(Function.getID(name, args.size())) || builtins.functions.containsKey(Function.getID(name, args.size())))
             errorAndKill("Duplicate function '" + name);
         currentProgram.currentFunction = new Function(name, args, ctx.pub != null, currentProgram.currentNamespace.name + "_");
+        currentProgram.currentFunction.inline = ctx.inline != null;
         currentProgram.currentFunction.context = ctx;
+        currentProgram.currentFunction.program = currentProgram;
 
         appendLine("jmp\n%" + currentProgram.currentNamespace.name + "_" + name + "_end%");
-        appendLine(":" + currentProgram.currentNamespace.name + "_" + name);
+        if (ctx.inline == null)
+            appendLine(":" + currentProgram.currentNamespace.name + "_" + name);
     }
 
     @Override
     public void exitFunctionDeclaration(SCPPParser.FunctionDeclarationContext ctx) {
         currentProgram.currentNamespace.functions.put(currentProgram.currentFunction.getID(), currentProgram.currentFunction);
-        appendLine("ret");
+        if (ctx.inline != null)
+            appendLine("ret");
         appendLine(":" + currentProgram.currentNamespace.name + "_" + currentProgram.currentFunction.name + "_end");
         currentProgram.currentFunction = null;
     }
@@ -444,8 +457,11 @@ public class Compiler implements SCPPListener {
     @Override
     public void exitReturnStatement(SCPPParser.ReturnStatementContext ctx) {
         checkInFunction("return");
-        evaluateExpression(ctx.expression());
-        appendLine("storeAtVar\n" + currentProgram.currentFunction.returnVariable);
+        if (ctx.expression() != null) {
+            evaluateExpression(ctx.expression());
+            appendLine("storeAtVar\n" + currentProgram.currentFunction.returnVariable);
+        }
+        appendLine("ret");
     }
 
     @Override
@@ -482,7 +498,11 @@ public class Compiler implements SCPPListener {
             path = "lib/" + ctx.LIBRARY().getText().substring(1, ctx.LIBRARY().getText().length() - 1) + ".sc";
         else
             path = ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
-        compileLowerLevel(Path.of(path));
+
+        if (!includedFiles.contains(path)) {
+            compileLowerLevel(Path.of(path));
+            includedFiles.add(path);
+        }
     }
 
     @Override

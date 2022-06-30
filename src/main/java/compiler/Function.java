@@ -4,6 +4,7 @@ import antlr.SCPPParser;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Function {
     final LinkedHashMap<String, String> arguments;
@@ -14,6 +15,8 @@ public class Function {
     final String name;
     private final String variablePrefix;
     SCPPParser.FunctionDeclarationContext context = null;
+    Program program = null;
+    boolean inline = false;
 
     public Function(String name, List<String> arguments, boolean isPublic, String variablePrefix) {
         this.arguments = new LinkedHashMap<>();
@@ -29,13 +32,21 @@ public class Function {
 
     public void call(List<SCPPParser.ExpressionContext> args) {
         checkArgumentCount(args, false);
+
         List<String> argumentList = arguments.values().stream().toList();
 
         for (int i = 0; i < Math.min(args.size(), arguments.size()); i++) {
             Evaluators.evaluateExpression(args.get(i));
-            Compiler.appendLine("storeAtVar\n" + argumentList.get(i)); //TODO: Optimize this
+            Compiler.appendLine("storeAtVar\n" + argumentList.get(i));
         }
-        Compiler.appendLine("jts\n%" + variablePrefix + name + "%");
+        if (inline) {
+            Program programBackup = Compiler.currentProgram.clone();
+            Compiler.currentProgram.currentFunction = this;
+
+            Compiler.compileContext(context.codeBlock());
+            Compiler.currentProgram = programBackup;
+        } else
+            Compiler.appendLine("jts\n%" + variablePrefix + name + "%");
     }
 
     public void checkArgumentCount(List<SCPPParser.ExpressionContext> args, boolean failsafe) {

@@ -1,4 +1,4 @@
-package compiler;
+package compiler.optimizer;
 
 import java.util.HashMap;
 import java.util.Map;
