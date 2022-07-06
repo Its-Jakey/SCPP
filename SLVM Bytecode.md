@@ -59,7 +59,7 @@ Notation:
 | `setColor` | [color] | sets the color of the next rect, line or pixel                                                                                                         
 | `clg`  | | clears the image buffer                                                                                                                                
 | `done` | | ends the program                                                                                                                                       
-| `malloc` | [size] | allocates memory                                                                                                                                       
+| `malloc` | [size] | allocates memory and sets the a register to the address of the first cell                                                                                                                                       
 | `round` | [1] [2] | rounds the value of [1] to [2] decimal places                                                                                                          
 | `floor` | [1] [2] | floors the value of [1] to [2] decimal places                                                                                                          
 | `ceil` | [1] [2] | ceils the value of [1] to [2] decimal places                                                                                                           
@@ -91,7 +91,7 @@ Notation:
 | `getCloudVar` | [cloudVarID] | sets the a register to the value of the cloud variable [cloudVarID]                                                                                    
 | `indexOfChar` | [string] [char] | sets the a register to the index of the first occurence of [char] in [string]                                                                          
 | `goto` | [x], [y] | moves to graphics pointer to [x], [y]
-| `imalloc` | [words] | allocates [words] of memory
+| `imalloc` | size | allocates size cells of memory and sets the address of the first to the a register
 | `getValueAtPointer` | [var] | sets the A register to the value at memory address [var]
 | `setValueAtPointer` | [var] | sets the memory address at [var] to the A register
 | `typeOf` | [var] | returns the type of [var] in string form (12: 'int', 6.2: 'float', 'sup': 'string')
