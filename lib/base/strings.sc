@@ -9,22 +9,26 @@ public namespace strings {
         return _asm_("contains", string, x);
     }
     public func join(a, b) {
-        return _asm_("loadAtVar", a, "join", b);
+        _asm_("loadAtVar", a);
+        return _asm_("join", b);
     }
     public func substring(string, start, end) {
         var ret = "";
         var i = start;
 
         while (i < end) {
-            ret = join(ret, charAt(string, i));
+            ret = concat(ret, charAt(string, i));
         }
         return ret;
+    }
+    public func substring(string, start) {
+        return substring(string, start, sizeOf(string));
     }
     public func repeat(string, times) {
         var ret = "";
 
         for (i from 0 to times)
-            ret = join(ret, string);
+            ret = concat(ret, string);
         return ret;
     }
     public func indexOfChar(string, char) {

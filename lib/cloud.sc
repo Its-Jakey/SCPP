@@ -13,24 +13,24 @@ public namespace cloud {
         var ret = "";
 
         for (i from 0 to strings::sizeOf(data) by 2) {
-            var word = strings::join(strings::charAt(data, i), strings::charAt(data, i + 1));
+            var word = concat(strings::charAt(data, i), strings::charAt(data, i + 1));
 
             if (word == special_word) {
-                i += 2;
-                var wordToRepeat = strings::join(strings::charAt(data, i), strings::charAt(data, i + 1));
+                i = i + 2;
+                var wordToRepeat = concat(strings::charAt(data, i), strings::charAt(data, i + 1));
 
                 if (wordToRepeat == special_word)
-                    ret = strings::join(ret, special_word);
+                    ret = concat(ret, special_word);
                 if (wordToRepeat != special_word) {
-                    i += 2;
-                    var repeats = strings::join(strings::charAt(data, i), strings::charAt(data, i + 1));
+                    i = i + 2;
+                    var repeats = concat(strings::charAt(data, i), strings::charAt(data, i + 1));
 
                     for (repeat from 0 to repeats)
-                        ret = strings::join(ret, wordToRepeat);
+                        ret = concat(ret, wordToRepeat);
                 }
             }
             if (word != special_word)
-                ret = strings::join(ret, word);
+                ret = concat(ret, word);
         }
 
         return ret;
@@ -41,30 +41,30 @@ public namespace cloud {
         var ret = "";
 
         for (i from 0 to len by 2) {
-            var word = strings::join(strings::charAt(input, i), strings::charAt(input, i + 1));
+            var word = concat(strings::charAt(input, i), strings::charAt(input, i + 1));
             var newWord = word;
             var count = 0;
 
             while (i < len && newWord == word) {
-                count++;
-                i += 2;
-                newWord = strings::join(strings::charAt(input, i), strings::charAt(input, i + 1));
+                count = count + 1;
+                i = i + 2;
+                newWord = concat(strings::charAt(input, i), strings::charAt(input, i + 1));
             }
-            i -= 2;
+            i = i - 2;
 
             if (count > 2) {
-                ret = strings::join(ret, special_word);
-                ret = strings::join(ret, word);
-                ret = strings::join(ret, count);
+                ret = concat(ret, special_word);
+                ret = concat(ret, word);
+                ret = concat(ret, count);
             }
             if (count < 3) {
                 for (i2 from 0 to count) {
                     if (word == special_word) {
-                        ret = strings::join(ret, special_word);
-                        ret = strings::join(ret, special_word);
+                        ret = concat(ret, special_word);
+                        ret = concat(ret, special_word);
                     }
                     if (word != special_word)
-                        ret = strings::join(ret, word);
+                        ret = concat(ret, word);
                 }
             }
         }
@@ -78,10 +78,10 @@ public namespace cloud {
 
             var word = strings::indexOfChar(chars, strings::charAt(value, i));
             if (word == -1) {
-                println(strings::join("Unsupported character ", strings::charAt(value, i)), strings::join("    at index ", i));
+                println("Unsupported character ", strings::charAt(value, i), " at index ", i);
                 exit();
             }
-            ret = strings::join(ret, word);
+            ret = concat(ret, word);
         }
         return ret;
     }
@@ -89,8 +89,8 @@ public namespace cloud {
         var ret = "";
 
         for (i from 0 to strings::sizeOf(value) by 2) {
-            var idx = strings::join(strings::charAt(value, i), strings::charAt(value, i + 1));
-            ret = strings::join(ret, strings::charAt(chars, idx));
+            var idx = concat(strings::charAt(value, i), strings::charAt(value, i + 1));
+            ret = concat(ret, strings::charAt(chars, idx));
         }
         return ret;
     }

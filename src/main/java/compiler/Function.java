@@ -17,6 +17,7 @@ public class Function {
     SCPPParser.FunctionDeclarationContext context = null;
     Program program = null;
     boolean inline = false;
+    int level = 0;
 
     public Function(String name, List<String> arguments, boolean isPublic, String variablePrefix) {
         this.arguments = new LinkedHashMap<>();
@@ -28,6 +29,10 @@ public class Function {
 
         for (String arg : arguments)
             this.arguments.put(arg, variablePrefix + name + "_" + arg);
+    }
+
+    public String getLabel() {
+        return variablePrefix + getID();
     }
 
     public void call(List<SCPPParser.ExpressionContext> args) {
@@ -46,12 +51,12 @@ public class Function {
             Compiler.compileContext(context.codeBlock());
             Compiler.currentProgram = programBackup;
         } else
-            Compiler.appendLine("jts\n%" + variablePrefix + name + "%");
+            Compiler.appendLine("jts\n%" + getLabel() + "%");
     }
 
     public void checkArgumentCount(List<SCPPParser.ExpressionContext> args, boolean failsafe) {
         if (args.size() != arguments.size()) {
-            Compiler.error(name + " takes " + arguments.size() + ", but " + args.size() + " were given.");
+            Compiler.error(name + " takes " + arguments.size() + " arguments, but " + args.size() + " were given.");
 
             if (failsafe) {
                 Compiler.printMessages();

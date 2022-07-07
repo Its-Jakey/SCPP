@@ -49,20 +49,27 @@ public class Optimizer {
                             .append("\n")
                             .append(lines[i + 3]);
                     i += 5;
+                } else if (lines[i].equals("loadAtVar") && lines[i + 2].equals("storeAtVar") && lines[i + 1].equals(lines[i + 3]))
+                    i += 3;
+                else if (lines[i].equals("storeAtVar") && lines[i + 2].equals("loadAtVar") && lines[i + 1].equals(lines[i + 3])) {
+                    ret.append("\n").append(lines[i]).append("\n").append(lines[i + 1]);
+                    i += 3;
+                } else if ((lines[i].equals("storeAtVar") || lines[i].equals("loadAtVar")) && lines[i + 2].equals(lines[i]) && lines[i + 1].equals(lines[i + 3])) {
+                    ret.append("\n").append(lines[i]).append("\n").append(lines[i + 1]);
                 } else
                     ret.append("\n").append(lines[i]);
-            } else {
-                if (i + 3 < lines.length) {
+            } else if (i + 3 < lines.length) {
                     if (lines[i].equals("loadAtVar") && lines[i + 2].equals("storeAtVar") && lines[i + 1].equals(lines[i + 3]))
                         i += 3;
                     else if (lines[i].equals("storeAtVar") && lines[i + 2].equals("loadAtVar") && lines[i + 1].equals(lines[i + 3])) {
                         ret.append("\n").append(lines[i]).append("\n").append(lines[i + 1]);
                         i += 3;
+                    } else if ((lines[i].equals("storeAtVar") || lines[i].equals("loadAtVar")) && lines[i + 2].equals(lines[i]) && lines[i + 1].equals(lines[i + 3])) {
+                        ret.append("\n").append(lines[i]).append("\n").append(lines[i + 1]);
                     } else
                         ret.append("\n").append(lines[i]);
                 } else
                     ret.append("\n").append(lines[i]);
-            }
 
         }
         //System.out.println("Optimizer reduced assembly from " + lines.length + " lines down to " + ret.substring(1).split("\n").length);

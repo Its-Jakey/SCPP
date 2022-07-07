@@ -126,7 +126,7 @@ public class Evaluators {
             ret = getFunction(getNamespace(variable.ID().getText()), variable.variable().ID().getText(), args);
         else if (builtins.functions.containsKey(Function.getID(variable.ID().getText(), args)))
             ret = builtins.functions.get(Function.getID(variable.ID().getText(), args));
-        else if (currentProgram.currentFunction != null && currentProgram.currentFunction.name.equals(variable.ID().getText()))
+        else if (currentProgram.currentFunction != null && currentProgram.currentFunction.getID().equals(Function.getID(variable.ID().getText(), args)))
             ret = currentProgram.currentFunction;
         else if (!currentProgram.currentNamespace.functions.containsKey(Function.getID(variable.ID().getText(), args))) {
             errorAndKill("Unknown function '" + variable.ID().getText() + "'");

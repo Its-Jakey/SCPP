@@ -6,15 +6,22 @@ import java.util.List;
 
 public class NamespaceBuiltins {
     public static void addTo(Namespace namespace) {
-        namespace.functions.put(Function.getID("pack", 0), new pack(namespace));
-        namespace.functions.put(Function.getID("unpack", 1), new unpack(namespace));
+        tryPut(namespace, new pack(namespace));
+        tryPut(namespace, new unpack(namespace));
+    }
+
+    private static void tryPut(Namespace namespace, Function function) {
+        String id = Function.getID(function.name, function.arguments.size());
+
+        if (!namespace.functions.containsKey(id))
+            namespace.functions.put(id, function);
     }
 
     private static class pack extends Function {
         private Namespace namespace;
 
         public pack(Namespace namespace) {
-            super("", List.of(), true, namespace.name + "_");
+            super("pack", List.of(), true, namespace.name + "_");
             this.namespace = namespace;
         }
 

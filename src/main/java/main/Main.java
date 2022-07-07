@@ -4,6 +4,7 @@ import compiler.Compiler;
 import org.apache.commons.cli.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -12,7 +13,7 @@ public class Main {
     private static String getOutputPathFromInput(String input) {
         return input.substring(0, input.lastIndexOf('/') + 1) + input.substring(input.lastIndexOf('/') + 1, input.lastIndexOf('.')) + ".txt";
     }
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         Options options = new Options();
 
         Option inputOpt = new Option("i", "input", true, "Input file to compile");

@@ -56,7 +56,7 @@ directive
 | includeDirective;
 
 defineDirective
-: '#' 'define' ID INT;
+: '#' 'define' ID (INT | HEX | BIN);
 
 includeDirective
 : '#' 'include' (STRING | LIBRARY);

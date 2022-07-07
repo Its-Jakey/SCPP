@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -31,6 +32,7 @@ public class Compiler implements SCPPListener {
     public static boolean optimize = true;
     static Program currentProgram;
     static List<String> includedFiles;
+    static LinkedHashMap<String, Program> compiledLibraries;
 
     public static String getPrefixMessage() {
         return currentProgram.fileName + " " + row + ":" + col;
@@ -49,7 +51,11 @@ public class Compiler implements SCPPListener {
 
     static void log(Object msg) {
         if (showLogs)
-            System.out.println("Log:\t" + msg);
+            messages.add("Log:\t" + msg);
+    }
+
+    static void message(String msg) {
+        messages.add("Message: " + msg);
     }
 
     public static void warn(String msg) {
@@ -64,11 +70,44 @@ public class Compiler implements SCPPListener {
         messages.forEach(System.out::println);
     }
 
+    private static void compileLibraries() {
+        boolean showLogBackup = !showLogs;
+        showLogs = false;
+
+        compiledLibraries = new LinkedHashMap<>();
+        File lib = new File("lib/base/");
+
+        for (File f : Objects.requireNonNull(lib.listFiles())) {
+            Path path = f.toPath();
+            String libName = path.getFileName().toString().substring(0, path.getFileName().toString().length() - 3);
+
+            compiledLibraries.put(libName, compileProgram(path, 0));
+        }
+
+        lib = new File("lib/");
+
+        for (File f : Objects.requireNonNull(lib.listFiles())) {
+            if (f.isDirectory())
+                continue;
+
+            Path path = f.toPath();
+            String libName = path.getFileName().toString().substring(0, path.getFileName().toString().length() - 3);
+
+            compiledLibraries.put(libName, compileProgram(path, 0));
+        }
+        showLogs = !showLogBackup;
+    }
+
     private static void runWalker(CharStream stream) {
         SCPPLexer lexer = new SCPPLexer(stream);
         SCPPParser parser = new SCPPParser(new CommonTokenStream(lexer));
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                error("line " + line + ":" + charPositionInLine + " " + msg);
+            }
+        });
         ParseTreeWalker walker = new ParseTreeWalker();
-
         walker.walk(new Compiler(), parser.program());
     }
 
@@ -77,7 +116,7 @@ public class Compiler implements SCPPListener {
 
         init();
         currentProgram = new Program(file.getFileName().toString());
-        currentProgram.isTopLevel = true;
+        currentProgram.level = 0;
 
         runWalker(CharStreams.fromPath(file));
         printMessages();
@@ -98,20 +137,26 @@ public class Compiler implements SCPPListener {
 
     private static void compileLowerLevel(Path file) {
         Program programBackup = currentProgram.clone();
+        currentProgram = compileProgram(file, programBackup.level - 1);
 
-        currentProgram = new Program(file.getFileName().toString());
-
-        try {
-            runWalker(CharStreams.fromPath(file));
-        } catch (Exception e) {
-            errorAndKill("Failed to compile file '" + currentProgram.fileName + "', " + e.getMessage());
-            failed = true;
-        }
         for (Map.Entry<String, Namespace> newSpace : currentProgram.namespaces.entrySet()) {
             if (!programBackup.namespaces.containsKey(newSpace.getKey()) && newSpace.getValue().isPubic)
                 programBackup.namespaces.put(newSpace.getKey(), newSpace.getValue());
         }
         currentProgram = programBackup;
+    }
+
+    private static Program compileProgram(Path path, int level) {
+        currentProgram = new Program(path.getFileName().toString());
+        currentProgram.level = level;
+
+        try {
+            runWalker(CharStreams.fromPath(path));
+        } catch (IOException e) {
+            errorAndKill("Failed to compile file '" + currentProgram.fileName + "', " + e.getMessage());
+            failed = true;
+        }
+        return currentProgram;
     }
 
     static void compileContext(ParserRuleContext ctx) {
@@ -129,6 +174,7 @@ public class Compiler implements SCPPListener {
         includedFiles = new ArrayList<>();
 
         appendLine("jmp\n%ENTRY%");
+        compileLibraries();
     }
 
     private static void end() {
@@ -144,7 +190,7 @@ public class Compiler implements SCPPListener {
         if (mainNamespace == null)
             error("main function not found, try defining one with 'public func main(){}'");
         else
-            appendLine("jts\n%" + mainNamespace.name + "_main%\ndone");
+            appendLine("jts\n%" + mainNamespace.functions.get(Function.getID("main", 0)).getLabel() + "%\ndone");
     }
 
     public static void appendLine(Object line) {
@@ -245,13 +291,14 @@ public class Compiler implements SCPPListener {
         currentProgram.currentNamespace = new Namespace(ctx.ID(0).getText(), ctx.pub != null);
         currentProgram.currentNamespace.context = ctx;
         currentProgram.currentNamespace.fileName = currentProgram.fileName;
-        NamespaceBuiltins.addTo(currentProgram.currentNamespace);
+        currentProgram.currentNamespace.level = currentProgram.level;
         appendLine(":" + currentProgram.currentNamespace.name);
     }
 
     @Override
     public void exitNamespaceDeclaration(SCPPParser.NamespaceDeclarationContext ctx) {
         if (ctx.codeBlock() != null) {
+            NamespaceBuiltins.addTo(currentProgram.currentNamespace);
             currentProgram.namespaces.put(currentProgram.currentNamespace.name, currentProgram.currentNamespace);
             currentProgram.currentNamespace = null;
             appendLine("ret");
@@ -271,13 +318,14 @@ public class Compiler implements SCPPListener {
         if (currentProgram.currentNamespace.functions.containsKey(Function.getID(name, args.size())) || builtins.functions.containsKey(Function.getID(name, args.size())))
             errorAndKill("Duplicate function '" + name);
         currentProgram.currentFunction = new Function(name, args, ctx.pub != null, currentProgram.currentNamespace.name + "_");
+        currentProgram.currentFunction.level = currentProgram.currentNamespace.level;
         currentProgram.currentFunction.inline = ctx.inline != null;
         currentProgram.currentFunction.context = ctx;
         currentProgram.currentFunction.program = currentProgram;
 
-        appendLine("jmp\n%" + currentProgram.currentNamespace.name + "_" + name + "_end%");
+        appendLine("jmp\n%" + currentProgram.currentFunction.getLabel() + "_end%");
         if (ctx.inline == null)
-            appendLine(":" + currentProgram.currentNamespace.name + "_" + name);
+            appendLine(":" + currentProgram.currentFunction.getLabel());
     }
 
     @Override
@@ -285,7 +333,7 @@ public class Compiler implements SCPPListener {
         currentProgram.currentNamespace.functions.put(currentProgram.currentFunction.getID(), currentProgram.currentFunction);
         if (ctx.inline != null)
             appendLine("ret");
-        appendLine(":" + currentProgram.currentNamespace.name + "_" + currentProgram.currentFunction.name + "_end");
+        appendLine(":" + currentProgram.currentFunction.getLabel() + "_end");
         currentProgram.currentFunction = null;
     }
 
@@ -481,7 +529,8 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitDefineDirective(SCPPParser.DefineDirectiveContext ctx) {
-        addConstant(ctx.ID().getText(), ctx.INT().getText());
+        addConstant(ctx.ID().getText(), ctx.INT() != null ? ctx.INT().getText() : (ctx.HEX() != null ? String.valueOf(Integer.parseInt(ctx.HEX().getText().substring(2), 16)) : String.valueOf(Integer.parseInt(ctx.BIN().getText().substring(2), 2))));
+        //addConstant(ctx.ID().getText(), ctx.INT().getText());
         log("Constant '" + ctx.ID().getText() + "' defined");
     }
 
@@ -492,16 +541,24 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitIncludeDirective(SCPPParser.IncludeDirectiveContext ctx) {
-        String path;
 
-        if (ctx.LIBRARY() != null)
-            path = "lib/" + ctx.LIBRARY().getText().substring(1, ctx.LIBRARY().getText().length() - 1) + ".sc";
-        else
-            path = ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1);
+        if (ctx.LIBRARY() != null) {
+            String lib = ctx.LIBRARY().getText().substring(1, ctx.LIBRARY().getText().length() - 1);
 
-        if (!includedFiles.contains(path)) {
-            compileLowerLevel(Path.of(path));
-            includedFiles.add(path);
+            if (!compiledLibraries.containsKey(lib))
+                error("Unknown library <" + lib + ">");
+            else {
+                Program program = compiledLibraries.get(lib);
+
+                for (Map.Entry<String, Namespace> namespace : program.namespaces.entrySet()) {
+                    if (!namespace.getValue().isPubic || currentProgram.namespaces.containsKey(namespace.getKey()))
+                        continue;
+                    currentProgram.namespaces.put(namespace.getKey(), namespace.getValue());
+                }
+                log("Included library <" + lib + ">");
+            }
+        } else {
+            compileLowerLevel(Path.of(ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1)));
         }
     }
 

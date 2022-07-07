@@ -7,7 +7,7 @@ public class Program {
     Namespace currentNamespace = null;
     Function currentFunction = null;
     String fileName;
-    boolean isTopLevel = false;
+    int level = 0;
 
     public Program(String fileName) {
         this.fileName = fileName;
@@ -19,7 +19,7 @@ public class Program {
         ret.namespaces = namespaces;
         ret.currentNamespace = currentNamespace;
         ret.currentFunction = currentFunction;
-        ret.isTopLevel = isTopLevel;
+        ret.level = level;
 
         return ret;
     }

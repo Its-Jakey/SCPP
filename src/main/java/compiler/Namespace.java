@@ -11,6 +11,7 @@ public class Namespace {
     String name;
     SCPPParser.NamespaceDeclarationContext context = null;
     String fileName = "";
+    int level = 0;
 
     public Namespace(String name, boolean isPublic) {
         this.name = name;
