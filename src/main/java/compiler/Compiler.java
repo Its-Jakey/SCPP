@@ -29,7 +29,7 @@ public class Compiler implements SCPPListener {
     static final Builtins builtins = new Builtins();
     static LinkedHashMap<String, String> constants;
     public static boolean showLogs = false;
-    public static boolean optimize = true;
+    public static boolean optimize = false;
     static Program currentProgram;
     static List<String> includedFiles;
     static LinkedHashMap<String, Program> compiledLibraries;
@@ -83,19 +83,13 @@ public class Compiler implements SCPPListener {
 
             compiledLibraries.put(libName, compileProgram(path, 0));
         }
-
-        lib = new File("lib/");
-
-        for (File f : Objects.requireNonNull(lib.listFiles())) {
-            if (f.isDirectory())
-                continue;
-
-            Path path = f.toPath();
-            String libName = path.getFileName().toString().substring(0, path.getFileName().toString().length() - 3);
-
-            compiledLibraries.put(libName, compileProgram(path, 0));
-        }
         showLogs = !showLogBackup;
+    }
+
+    private Program getLibrary(String lib) {
+        if (!compiledLibraries.containsKey(lib))
+            compiledLibraries.put(lib, compileProgram(Path.of("lib/" + lib + ".sc"), 0));
+        return compiledLibraries.get(lib);
     }
 
     private static void runWalker(CharStream stream) {
@@ -147,6 +141,8 @@ public class Compiler implements SCPPListener {
     }
 
     private static Program compileProgram(Path path, int level) {
+        Program programBackup = currentProgram != null ? currentProgram.clone() : null;
+
         currentProgram = new Program(path.getFileName().toString());
         currentProgram.level = level;
 
@@ -156,7 +152,9 @@ public class Compiler implements SCPPListener {
             errorAndKill("Failed to compile file '" + currentProgram.fileName + "', " + e.getMessage());
             failed = true;
         }
-        return currentProgram;
+        Program compiledProgram = currentProgram.clone();
+        currentProgram = programBackup;
+        return compiledProgram;
     }
 
     static void compileContext(ParserRuleContext ctx) {
@@ -453,8 +451,10 @@ public class Compiler implements SCPPListener {
             varName = currentProgram.currentNamespace.name + "_" + ctx.ID().getText();
             currentProgram.currentNamespace.variables.put(ctx.ID().getText(), new Variable(varName, ctx.pub != null));
         }
-        evaluateExpression(ctx.expression());
-        appendLine("storeAtVar\n" + varName);
+        if (ctx.expression() != null) {
+            evaluateExpression(ctx.expression());
+            appendLine("storeAtVar\n" + varName);
+        }
     }
 
     @Override
@@ -544,19 +544,15 @@ public class Compiler implements SCPPListener {
 
         if (ctx.LIBRARY() != null) {
             String lib = ctx.LIBRARY().getText().substring(1, ctx.LIBRARY().getText().length() - 1);
+            Program program = getLibrary(lib);
+            //System.out.println(program.fileName);
 
-            if (!compiledLibraries.containsKey(lib))
-                error("Unknown library <" + lib + ">");
-            else {
-                Program program = compiledLibraries.get(lib);
-
-                for (Map.Entry<String, Namespace> namespace : program.namespaces.entrySet()) {
-                    if (!namespace.getValue().isPubic || currentProgram.namespaces.containsKey(namespace.getKey()))
-                        continue;
-                    currentProgram.namespaces.put(namespace.getKey(), namespace.getValue());
-                }
-                log("Included library <" + lib + ">");
+            for (Map.Entry<String, Namespace> namespace : program.namespaces.entrySet()) {
+                if (!namespace.getValue().isPubic || currentProgram.namespaces.containsKey(namespace.getKey()))
+                    continue;
+                currentProgram.namespaces.put(namespace.getKey(), namespace.getValue());
             }
+            log("Included library <" + lib + ">");
         } else {
             compileLowerLevel(Path.of(ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1)));
         }
