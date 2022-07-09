@@ -19,6 +19,7 @@ public class Builtins extends Namespace {
         add(new malloc());
         add(new exit());
         addAllArgs(new concat());
+        add(new free());
     }
 
     private void addAllArgs(Function function) {
@@ -146,6 +147,22 @@ public class Builtins extends Namespace {
                 appendLine("join\nconcatTmp");
                 appendLine("storeAtVar\n" + super.returnVariable);
             }
+        }
+    }
+
+    private static class free extends Function {
+        public free() {
+            super("free", List.of("address", "words"), true, "__builtins__");
+        }
+
+        @Override
+        public void call(List<SCPPParser.ExpressionContext> args) {
+            super.checkArgumentCount(args, true);
+            evaluateExpression(args.get(0));
+            appendLine("storeAtVar\nfreeAddr");
+
+            evaluateExpression(args.get(1));
+            appendLine("storeAtVar\nfreeWords\nfree\nfreeAddr\nfreeWords");
         }
     }
 }

@@ -2,6 +2,7 @@ package main;
 
 import compiler.Compiler;
 import org.apache.commons.cli.*;
+import slvm.SLVM;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,10 +21,12 @@ public class Main {
         inputOpt.setRequired(true);
         Option outputOpt = new Option("o", "output", true, "Output file");
         Option testOpt = new Option("t", "test", false, "Compiles all files in /examples directory");
+        Option runOpt = new Option("r", "run", false, "Emulates the program after compiling");
 
         options.addOption(inputOpt);
         options.addOption(outputOpt);
         options.addOption(testOpt);
+        options.addOption(runOpt);
 
         CommandLine cmd = null;
         CommandLineParser parser = new BasicParser();
@@ -54,5 +57,7 @@ public class Main {
 
         String asm = Compiler.compile(Path.of(input));
         Files.writeString(Path.of(output), asm);
+        if (cmd.hasOption("r"))
+            new SLVM(asm).run();
     }
 }

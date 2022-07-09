@@ -8,7 +8,7 @@ public class Assembler {
         String[] lines;
         StringBuilder ret = new StringBuilder();
         HashMap<String, Integer> labels = new HashMap<>();
-        int line_n = 1;
+        int line_n = 0;
 
         if (assembly.contains("\n"))
             lines = assembly.split("\n");
