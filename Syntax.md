@@ -182,3 +182,11 @@ Switch statements can be used like
 or like
 
     #include <[library name]>
+
+## Comments
+
+comments are used to place text in your code. There are 2 types of comments, block comments and line comments.
+
+    //This is a line comment!
+    /*This is a block comment!
+    I can be multiple lines!*/

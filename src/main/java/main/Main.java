@@ -12,7 +12,7 @@ import java.util.Objects;
 
 public class Main {
     private static String getOutputPathFromInput(String input) {
-        return input.substring(0, input.lastIndexOf('/') + 1) + input.substring(input.lastIndexOf('/') + 1, input.lastIndexOf('.')) + ".txt";
+        return input.substring(0, input.lastIndexOf('/') + 1) + input.substring(input.lastIndexOf('/') + 1, input.lastIndexOf('.')) + ".slvm.txt";
     }
     public static void main(String[] args) throws IOException {
         Options options = new Options();

@@ -33,6 +33,8 @@ public class SLVM {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
             return 0;
+        } catch (Exception e) {
+            throw new VMException(e.getMessage());
         }
     }
     private String getNext() {
@@ -90,6 +92,8 @@ public class SLVM {
     }
 
     private void setNextVarValue(String value) {
+        if (value == null)
+            throw new VMException("Value is null");
         ram[getVar(getNext())] = value;
     }
 
@@ -172,6 +176,8 @@ public class SLVM {
     }
 
     public void run() {
+        //Arrays.fill(ram, "");
+
         runStart = System.currentTimeMillis();
         while (running)
             execute(instructions[pc++]);
@@ -187,7 +193,7 @@ public class SLVM {
                 pc = (int) getNextInt();
             }
             case "ret" -> pc = stack.pop();
-            case "addWithVar" -> a = String.valueOf(getIntValue(a) + getIntValue(getNextVarValue()));
+            case "addWithVar" -> a = String.valueOf(getIntValue(a) + getNextIntVar());
             case "subWithVar" -> a = String.valueOf(getIntValue(a) - getIntValue(getNextVarValue()));
             case "mulWithVar" -> a = String.valueOf(getIntValue(a) * getIntValue(getNextVarValue()));
             case "divWithVar" -> a = String.valueOf(getIntValue(a) / getIntValue(getNextVarValue()));
@@ -203,7 +209,7 @@ public class SLVM {
             case "jf" -> pc = !getBoolValue(a) ? (int) getNextInt() : pc + 1;
             case "boolAndWithVar" -> a = getBool(getBoolValue(a) && getNextBool());
             case "boolOrWithVar" -> a = getBool(getBoolValue(a) || getNextBool());
-            case "boolEqualsWithVar" -> a = getBool(a.equals(getNextVarValue()));
+            case "boolEqualWithVar" -> a = getBool(a.equals(getNextVarValue()));
             case "largerThanOrEqualWithVar" -> a = getBool(getIntValue(a) >= getIntValue(getNextVarValue()));
             case "smallerThanOrEqualWithVar" -> a = getBool(getIntValue(a) <= getIntValue(getNextVarValue()));
             case "boolNotEqualsWithVar" -> a = getBool(!a.equals(getNextVarValue()));
