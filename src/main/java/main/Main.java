@@ -58,6 +58,6 @@ public class Main {
         String asm = Compiler.compile(Path.of(input));
         Files.writeString(Path.of(output), asm);
         if (cmd.hasOption("r"))
-            new SLVM(asm).run();
+            new SLVM(asm, output).run();
     }
 }

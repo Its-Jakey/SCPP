@@ -1,6 +1,7 @@
 # SCPP
 
 NOTICE "++" "--" "+=" "-=" "*=" "/=" have not been implemented yet
+This branch of the compiler has array safety (meaning you cannot index out of an arrays bounds), array safety will not be in any version of the language except this one
 
 ### This programming language is **VERY** unstable! If you find a bug, please report it in the 'issues' tab.
 #### You can find documentation on the syntax [here](Syntax.md), documentation on the builtin libraries [here](Libraries.md), and the VM instruction set [here](SLVM%20Bytecode.md)

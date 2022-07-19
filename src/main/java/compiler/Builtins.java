@@ -108,9 +108,15 @@ public class Builtins extends Namespace {
             super.checkArgumentCount(args, false);
 
             Evaluators.evaluateExpression(args.get(0));
+            Compiler.appendLine("incA");
             Compiler.appendLine("storeAtVar\nmallocWords");
             Compiler.appendLine("malloc\nmallocWords");
             Compiler.appendLine("storeAtVar\n" + super.returnVariable);
+
+            Compiler.appendLine("loadAtVar\nmallocWords");
+            Compiler.appendLine("decA");
+            Compiler.appendLine("setValueAtPointer\n" + super.returnVariable);
+            Compiler.appendLine("inc\n" + super.returnVariable);
         }
     }
 
@@ -152,17 +158,19 @@ public class Builtins extends Namespace {
 
     private static class free extends Function {
         public free() {
-            super("free", List.of("address", "words"), true, "__builtins__");
+            super("free", List.of("array"), true, "__builtins__");
         }
 
         @Override
         public void call(List<SCPPParser.ExpressionContext> args) {
             super.checkArgumentCount(args, true);
             evaluateExpression(args.get(0));
+            appendLine("decA");
             appendLine("storeAtVar\nfreeAddr");
 
-            evaluateExpression(args.get(1));
-            appendLine("storeAtVar\nfreeWords\nfree\nfreeAddr\nfreeWords");
+            appendLine("getValueAtPointerOfA");
+            appendLine("storeAtVar\nfreeWords");
+            appendLine("free\nfreeAddr\nfreeWords");
         }
     }
 }

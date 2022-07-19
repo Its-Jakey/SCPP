@@ -1,5 +1,8 @@
 package slvm;
 
+import compiler.Safety;
+import compiler.optimizer.Assembler;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -9,24 +12,28 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SLVM {
     private final String[] instructions;
-    private String[] ram = new String[0xFFFFFFF];
-    private boolean[] usedAddresses = new boolean[ram.length];
+    private final String[] ram = new String[0xFFFFFFF];
+    private final boolean[] usedAddresses = new boolean[ram.length];
     static int pc;
     private String a;
     private boolean isMouseDown;
     private final List<Integer> keysPressed;
     private final LinkedHashMap<String, Integer> variables;
     private final Stack<Integer> stack;
-    private int vp;
+    private final Stack<String> varStack;
     private boolean running;
-    private List<String> buffer;
+    private final List<String> buffer;
     private final VMGraphics graphics;
     private final JPanel panel;
     private long runStart;
-    private BufferedImage image;
+    private final BufferedImage image;
+    static String fileName = null, line = "0";
+    static List<Metadata> metadata;
+    private final String assemblyName;
 
     private double getIntValue(String value) {
         try {
@@ -101,7 +108,7 @@ public class SLVM {
         return getIntValue(value) > 0;
     }
     private boolean getNextBool() {
-        return getBoolValue(getNext());
+        return getBoolValue(getNextVarValue());
     }
     private String getBool(boolean bool) {
         return String.valueOf(bool ? 1 : 0);
@@ -128,20 +135,23 @@ public class SLVM {
     }
 
 
-    public SLVM(String program) {
+    public SLVM(String program, String assemblyName) {
         this.instructions = program.split("\n");
         this.variables = new LinkedHashMap<>();
         this.running = true;
         this.buffer = new ArrayList<>();
         this.stack = new Stack<>();
+        this.varStack = new Stack<>();
         this.graphics = new VMGraphics();
         this.keysPressed = new ArrayList<>();
         this.image = new BufferedImage(480, 360, BufferedImage.TYPE_INT_RGB);
+        this.assemblyName = assemblyName;
+        metadata = new ArrayList<>();
 
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(480, 360);
-        
+
         panel = new JPanel() {
             @Override
             public void paintComponent(Graphics g) {
@@ -191,8 +201,12 @@ public class SLVM {
             case "jts" -> {
                 stack.push(pc + 1);
                 pc = (int) getNextInt();
+                metadata.add(new Metadata(fileName, line));
             }
-            case "ret" -> pc = stack.pop();
+            case "ret" -> {
+                pc = stack.pop();
+                metadata.remove(metadata.size() - 1);
+            }
             case "addWithVar" -> a = String.valueOf(getIntValue(a) + getNextIntVar());
             case "subWithVar" -> a = String.valueOf(getIntValue(a) - getIntValue(getNextVarValue()));
             case "mulWithVar" -> a = String.valueOf(getIntValue(a) * getIntValue(getNextVarValue()));
@@ -207,8 +221,16 @@ public class SLVM {
             case "jmp" -> pc = (int) getNextInt();
             case "jt" -> pc = getBoolValue(a) ? (int) getNextInt() : pc + 1;
             case "jf" -> pc = !getBoolValue(a) ? (int) getNextInt() : pc + 1;
-            case "boolAndWithVar" -> a = getBool(getBoolValue(a) && getNextBool());
-            case "boolOrWithVar" -> a = getBool(getBoolValue(a) || getNextBool());
+            case "boolAndWithVar" -> {
+                boolean boolA = getBoolValue(a);
+                boolean boolB = getNextBool();
+                a = getBool(boolA && boolB);
+            }
+            case "boolOrWithVar" -> {
+                boolean boolA = getBoolValue(a);
+                boolean boolB = getNextBool();
+                a = getBool(boolA || boolB);
+            }
             case "boolEqualWithVar" -> a = getBool(a.equals(getNextVarValue()));
             case "largerThanOrEqualWithVar" -> a = getBool(getIntValue(a) >= getIntValue(getNextVarValue()));
             case "smallerThanOrEqualWithVar" -> a = getBool(getIntValue(a) <= getIntValue(getNextVarValue()));
@@ -294,7 +316,11 @@ public class SLVM {
             case "getCloudVar" -> {}
             case "indexOfChar" -> {}
             case "goto" -> buffer.addAll(List.of("goto", getNextVarValue(), getNextVarValue()));
-            case "imalloc" -> a = getInt(allocateMemory((int) getNextInt()));
+            case "imalloc" -> {
+                int words = (int) getNextInt();
+
+                a = getInt(allocateMemory(words));
+            }
             case "getValueAtPointer" -> a = ram[(int) getNextIntVar()];
             case "setValueAtPointer" -> ram[(int) getNextIntVar()] = a;
             case "typeOf" -> {}
@@ -307,7 +333,73 @@ public class SLVM {
                     usedAddresses[i] = false;
             }
             case "nop" -> {}
-            default -> throw new VMException("Unknown instruction '" + instruction + "'");
+            case "getVarAddress" -> getVar(getNext());
+            case "setVarAddress" -> {
+                String varName = getNext();
+
+                if (variables.containsKey(varName))
+                    variables.replace(varName, (int) getNextIntVar());
+            }
+            case "copyVar" -> {
+                String source = getNext();
+                String dest = getNext();
+
+                ram[getVar(dest)] = ram[getVar(source)];
+            }
+            case "incA" -> a = String.valueOf(getIntValue(a) + 1);
+            case "decA" -> a = String.valueOf(getIntValue(a) - 1);
+            case "arrayBoundsCheck" -> { //array, a: index
+                String arrayName = getNext();
+                int array = (int) getIntValue(ram[getVar(arrayName)]);
+                //System.out.println(ram[array]);
+                int index = (int) getIntValue(a);
+                int arraySize = (int) getIntValue(ram[array - 1]);
+
+                if (ram[array - 1] == null)
+                    System.out.println("Array size is null for array '" + arrayName + "'");
+
+                if (index < -1 || index >= arraySize)
+                    throw new VMException("Array index " + index + " out of bounds for length " + arraySize);
+            }
+            case "getValueAtPointerOfA" -> a = ram[(int) getIntValue(a)];
+            case "metadataLine" -> line = getNext();
+            case "metadataFilename" -> fileName = getNext();
+            case "stackPushA" -> varStack.push(a);
+            case "stackPopA" -> a = varStack.pop();
+            case "stackPush" -> varStack.push(getNextVarValue());
+            case "stackPop" -> ram[getVar(getNext())] = varStack.pop();
+            case "stackPeekA" -> a = varStack.peek();
+            case "stackPeek" -> ram[getVar(getNext())] = varStack.peek();
+            case "stackInc" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) + 1));
+            case "stackDec" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) - 1));
+            case "stackAdd" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) + getIntValue(varStack.pop())));
+            case "stackSub" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) - getIntValue(varStack.pop())));
+            case "stackMul" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) * getIntValue(varStack.pop())));
+            case "stackDiv" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) / getIntValue(varStack.pop())));
+            case "stackBitwiseLsf" -> varStack.push(String.valueOf((int) getIntValue(varStack.pop()) << (int) getIntValue(varStack.pop())));
+            case "stackBitwiseRsf" -> varStack.push(String.valueOf((int) getIntValue(varStack.pop()) >> (int) getIntValue(varStack.pop())));
+            case "stackBitwiseAnd" -> varStack.push(String.valueOf((int) getIntValue(varStack.pop()) & (int) getIntValue(varStack.pop())));
+            case "stackBitwiseOr" ->  varStack.push(String.valueOf((int) getIntValue(varStack.pop()) | (int) getIntValue(varStack.pop())));
+            case "stackMod" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) % getIntValue(varStack.pop())));
+            case "stackBoolAnd" -> {
+                boolean boolA = getIntValue(varStack.pop()) > 0;
+                boolean boolB = getIntValue(varStack.pop()) > 0;
+
+                varStack.push(boolA && boolB ? "1" : "0");
+            }
+            case "stackBoolOr" -> {
+                boolean boolA = getIntValue(varStack.pop()) > 0;
+                boolean boolB = getIntValue(varStack.pop()) > 0;
+
+                varStack.push(boolA || boolB ? "1" : "0");
+            }
+            case "stackBoolEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "1" : "0");
+            case "stackLargerThanOrEqual" -> varStack.push(getIntValue(varStack.pop()) >= getIntValue(varStack.pop()) ? "1" : "0");
+            case "stackSmallerThanOrEqual" -> varStack.push(getIntValue(varStack.pop()) <= getIntValue(varStack.pop()) ? "1" : "0");
+            case "stackNotEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "0" : "1");
+            case "stackSmallerThan" -> varStack.push(getIntValue(varStack.pop()) < getIntValue(varStack.pop()) ? "1" : "0");
+            case "stackLargerThan" -> varStack.push(getIntValue(varStack.pop()) > getIntValue(varStack.pop()) ? "1" : "0");
+            default -> throw new VMException("Unknown instruction '" + instruction + "'", assemblyName);
         }
     }
 }

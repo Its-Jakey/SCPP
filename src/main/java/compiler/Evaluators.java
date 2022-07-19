@@ -39,6 +39,8 @@ public class Evaluators {
         if (index == null) return;
 
         evaluateExpression(index.expression());
+        if (Safety.checkArrayBounds)
+            appendLine("arrayBoundsCheck\n" + array);
         appendLine("addWithVar\n" + array);
         appendLine("storeAtVar\n" + indexName);
         appendLine("getValueAtPointer\n" + indexName);
@@ -52,9 +54,13 @@ public class Evaluators {
         List<SCPPParser.ExpressionContext> args = evaluateArgumentArray(ctx);
         String address = createTemp();
 
-        appendLine("imalloc\n" + args.size());
+        appendLine("imalloc\n" + (args.size() + 1));
         appendLine("storeAtVar\n" + address);
-        appendLine("storeAtVar\n" + createTemp());
+
+        appendLine("ldi\n" + args.size());
+        appendLine("setValueAtPointer\n" + address);
+        appendLine("inc\n" + address);
+        appendLine("copyVar\n" + address + "\n" + createTemp());
 
         for (int i = 0; i < args.size(); i++) {
             SCPPParser.ExpressionContext arg = args.get(i);
