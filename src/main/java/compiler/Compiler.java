@@ -418,8 +418,10 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitVariableDeclaration(SCPPParser.VariableDeclarationContext ctx) {
-        if (currentProgram.currentNamespace == null)
+        if (currentProgram.currentNamespace == null) {
             error("Cannot define variable outside of namespace bounds");
+            return;
+        }
         String varName;
         if (currentProgram.currentFunction != null) {
             if (currentProgram.currentFunction.localVariables.containsKey(ctx.ID().getText()) || currentProgram.currentFunction.arguments.containsKey(ctx.ID().getText()))
