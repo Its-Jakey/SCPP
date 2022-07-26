@@ -109,10 +109,27 @@ public class SLVM {
         return String.valueOf(bool ? 1 : 0);
     }
     private String getInt(double val) {
+        if (Math.round(val) == val)
+            return String.valueOf((int) val);
         return String.valueOf(val);
     }
     private double getNextIntVar() {
         return getIntValue(getNextVarValue());
+    }
+
+    private boolean isInt(String s) {
+        try {
+            Double.parseDouble(s);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isEqual(String a, String b) {
+        if (isInt(a) && isInt(b))
+            return getIntValue(a) == getIntValue(b);
+        return a.equals(b);
     }
 
     private int mapKey(String key) {
@@ -129,6 +146,8 @@ public class SLVM {
         };
     }
 
+    private final JFrame frame;
+
 
     public SLVM(String program) {
         this.instructions = program.split("\n");
@@ -142,7 +161,7 @@ public class SLVM {
         this.image = new BufferedImage(480, 360, BufferedImage.TYPE_INT_RGB);
         //metadata = new ArrayList<>();
 
-        JFrame frame = new JFrame();
+        frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(480, 360);
 
@@ -176,7 +195,6 @@ public class SLVM {
             }
         });
         frame.add(panel);
-        frame.setVisible(true);
     }
 
     public void run() {
@@ -225,10 +243,10 @@ public class SLVM {
                 boolean boolB = getNextBool();
                 a = getBool(boolA || boolB);
             }
-            case "boolEqualWithVar" -> a = getBool(a.equals(getNextVarValue()));
+            case "boolEqualWithVar" -> a = getBool(isEqual(a, getNextVarValue()));
             case "largerThanOrEqualWithVar" -> a = getBool(getIntValue(a) >= getIntValue(getNextVarValue()));
             case "smallerThanOrEqualWithVar" -> a = getBool(getIntValue(a) <= getIntValue(getNextVarValue()));
-            case "boolNotEqualsWithVar" -> a = getBool(!a.equals(getNextVarValue()));
+            case "boolNotEqualsWithVar" -> a = getBool(!isEqual(a, getNextVarValue()));
             case "smallerThanWithVar" -> a = getBool(getIntValue(a) < getIntValue(getNextVarValue()));
             case "largerThanWithVar" -> a = getBool(getIntValue(a) > getIntValue(getNextVarValue()));
             case "putPixel" -> buffer.addAll(List.of("putPixel", getNextVarValue(), getNextVarValue()));
@@ -298,6 +316,7 @@ public class SLVM {
             }
             case "arraySize" -> {}
             case "graphicsFlip" -> {
+                frame.setVisible(true);
                 graphics.process(buffer, image.createGraphics());
                 panel.repaint();
             }
