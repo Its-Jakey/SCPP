@@ -31,7 +31,6 @@ public class Compiler implements SCPPListener {
     public static boolean showLogs = false;
     public static boolean optimize = false;
     static Program currentProgram;
-    static List<String> includedFiles;
     static LinkedHashMap<String, Program> compiledLibraries;
 
     public static String getPrefixMessage() {
@@ -68,22 +67,6 @@ public class Compiler implements SCPPListener {
 
     public static void printMessages() {
         messages.forEach(System.out::println);
-    }
-
-    private static void compileLibraries() {
-        boolean showLogBackup = !showLogs;
-        showLogs = false;
-
-        compiledLibraries = new LinkedHashMap<>();
-        File lib = new File("lib/base/");
-
-        for (File f : Objects.requireNonNull(lib.listFiles())) {
-            Path path = f.toPath();
-            String libName = path.getFileName().toString().substring(0, path.getFileName().toString().length() - 3);
-
-            compiledLibraries.put(libName, compileProgram(path, 0));
-        }
-        showLogs = !showLogBackup;
     }
 
     private Program getLibrary(String lib) {
@@ -169,10 +152,9 @@ public class Compiler implements SCPPListener {
         messages = new ArrayList<>();
         constants = new LinkedHashMap<>();
         tempStack = new Stack<>();
-        includedFiles = new ArrayList<>();
+        compiledLibraries = new LinkedHashMap<>();
 
         appendLine("jmp\n%ENTRY%");
-        compileLibraries();
     }
 
     private static void end() {

@@ -207,8 +207,8 @@ public class SLVM {
             case "jmp" -> pc = (int) getNextInt();
             case "jt" -> pc = getBoolValue(a) ? (int) getNextInt() : pc + 1;
             case "jf" -> pc = !getBoolValue(a) ? (int) getNextInt() : pc + 1;
-            case "boolAndWithVar" -> a = getBool(getBoolValue(a) && getNextBool());
-            case "boolOrWithVar" -> a = getBool(getBoolValue(a) || getNextBool());
+            case "boolAndWithVar" -> a = getBool(getBoolValue(a) && getBoolValue(getNextVarValue()));
+            case "boolOrWithVar" -> a = getBool(getBoolValue(a) || getBoolValue(getNextVarValue()));
             case "boolEqualWithVar" -> a = getBool(a.equals(getNextVarValue()));
             case "largerThanOrEqualWithVar" -> a = getBool(getIntValue(a) >= getIntValue(getNextVarValue()));
             case "smallerThanOrEqualWithVar" -> a = getBool(getIntValue(a) <= getIntValue(getNextVarValue()));
