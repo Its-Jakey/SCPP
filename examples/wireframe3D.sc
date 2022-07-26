@@ -203,22 +203,6 @@ namespace wireframe {
         }
     }
 
-    public func createSphere(pos, size, color, steps) {
-        var sizeInc = size / (steps / 2);
-        var midWay = steps / 2;
-        var currentSize = sizeInc;
-
-        for (y from 1 to steps - 1) {
-            var padding = currentSize / 2;
-            createHorizontalCircle(relative(pos, currentSize, currentSize, 0), currentSize, color, steps);
-
-            if (y > midWay)
-                currentSize = currentSize - sizeInc;
-            if (y < midWay || y == midWay)
-                currentSize = currentSize + sizeInc;
-        }
-    }
-
     public func drawLine(start, end, color) {
         wires[wireCount] = {start, end, color};
         wireCount = wireCount + 1;
@@ -236,7 +220,6 @@ namespace wireframe {
         createCube({50, 50, 0}, 25, 0xFF0000);
         createPyramid({110, 110, 0}, 50, 0x0000FF);
         //createHorizontalCircle({200, 200, 0}, 50, 0xFFFF00, 24);
-        createSphere({200, 200, 0}, 50, 0xFFFF00, 24);
     }
 
     public func main() {
