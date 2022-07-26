@@ -89,7 +89,7 @@ Notation:
 | `ask`                      | [text] | displays the text [text] and waits for the user to enter a string. Sets the a register to the string entered.                                          
 | `setCloudVar`              | [cloudVarID], [var] | sets the cloud variable [cloudVarID] to the value of the variable [var]                                                                                
 | `getCloudVar`              | [cloudVarID] | sets the a register to the value of the cloud variable [cloudVarID]                                                                                    
-| `indexOfChar`              | [string] [char] | sets the a register to the index of the first occurence of [char] in [string]                                                                          
+| `indexOfChar`              | [string], [char] | sets the a register to the index of the first occurence of [char] in [string]                                                                          
 | `goto`                     | [x], [y] | moves to graphics pointer to [x], [y]
 | `imalloc`                  | size | allocates size cells of memory and sets the address of the first to the a register
 | `getValueAtPointer`        | [var] | sets the A register to the value at memory address [var]
@@ -97,3 +97,10 @@ Notation:
 | `typeOf`                   | [var] | returns the type of [var] in string form (12: 'int', 6.2: 'float', 'sup': 'string')
 | `runtimeMillis`            | | Sets the A register to the current runtime length in milliseconds
 | `free`                     | [addr], [words] | Frees [words] at [addr]
+| `getVarAddress`            | [var] | Sets the A register to address of the [var]
+| `setVarAddress`            | [var] | Sets the [var] address to the value of the A register
+| `copyVar`                  | [old_var], [new_var] | Creates variable [new_var] and sets its address to the address of [old_var]
+| `incA`                     |  | Adds one to the A register
+| `decA`                     |  | subtracts one from the A register
+| `arrayBoundsCheck`         | [arr], [index] | Checks if the [index] is within the bounds of the [arr]. If not, stops the program.
+| `getValueAtPointerOfA`     |  | Sets the A register to the value the A register is pointing to.
