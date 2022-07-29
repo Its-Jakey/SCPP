@@ -14,10 +14,11 @@ bracketStatement
 | functionDeclaration
 | ifStatement
 | whileLoop
-| forLoop;
+| forLoop
+| switchStatement;
 
 namespaceDeclaration
-: pub='public'? 'namespace' ID (codeBlock | 'is' ID ';');
+: pub='public'? 'namespace' ID (('uses' '(' idList ')')? codeBlock | 'is' ID ';');
 
 functionDeclaration
 : pub='public'? inline='inline'? 'func' ID '(' functionArgumentArray? ')' codeBlock;
@@ -30,6 +31,15 @@ whileLoop
 
 forLoop
 : 'for' '(' ID 'from' expression 'to' expression ('by' expression)? ')' codeBlock;
+
+switchStatement
+: 'switch' '(' expression ')' '{' caseStatement+ defaultStatement? '}';
+
+caseStatement
+: 'case' expression '->' codeBlock;
+
+defaultStatement
+: 'default' '->' codeBlock;
 
 
 nonBracketStatement
@@ -92,6 +102,9 @@ value
 | HEX
 | BIN
 | '{' argumentArray '}';
+
+idList
+: ID (',' idList)?;
 
 
 

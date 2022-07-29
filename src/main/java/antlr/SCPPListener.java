@@ -87,6 +87,36 @@ public interface SCPPListener extends ParseTreeListener {
 	 */
 	void exitForLoop(SCPPParser.ForLoopContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link SCPPParser#switchStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterSwitchStatement(SCPPParser.SwitchStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SCPPParser#switchStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitSwitchStatement(SCPPParser.SwitchStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SCPPParser#caseStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterCaseStatement(SCPPParser.CaseStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SCPPParser#caseStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitCaseStatement(SCPPParser.CaseStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SCPPParser#defaultStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterDefaultStatement(SCPPParser.DefaultStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SCPPParser#defaultStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitDefaultStatement(SCPPParser.DefaultStatementContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link SCPPParser#nonBracketStatement}.
 	 * @param ctx the parse tree
 	 */
@@ -236,4 +266,14 @@ public interface SCPPListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitValue(SCPPParser.ValueContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SCPPParser#idList}.
+	 * @param ctx the parse tree
+	 */
+	void enterIdList(SCPPParser.IdListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SCPPParser#idList}.
+	 * @param ctx the parse tree
+	 */
+	void exitIdList(SCPPParser.IdListContext ctx);
 }

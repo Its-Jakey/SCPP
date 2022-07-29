@@ -5,6 +5,7 @@ import compiler.postfixConversion.InfixToPostfix;
 import compiler.postfixConversion.ValueOrOperatorOrID;
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.awt.image.BufferedImage;
 import java.beans.Expression;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,7 @@ public class Evaluators {
             appendLine("storeAtVar\n" + indexName);
         getValueAtIndex(indexName, index.arrayIndex(), indexName);
     }
+
 
     static void assignArgumentArrayToArray(SCPPParser.ArgumentArrayContext ctx) {
         List<SCPPParser.ExpressionContext> args = evaluateArgumentArray(ctx);

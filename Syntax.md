@@ -115,6 +115,10 @@ Namespaces can be defined with the 'namespace' keyword like
 
     namespace myNamespace {yourCodeHere...}
 
+Or like this to include the functions and variables from other namespaces
+
+    namespace myNamespace uses (namespace1, namespace2) {yourCodeHere...}
+
 When you define a function or global variable with the 'public' keyword prefix, you can access it from another namespace like
 
     namespace otherNamespace {
@@ -156,21 +160,19 @@ Or like
 
 ## Switch statements
 
-!!! Note: This is not yet implemented
-
 Switch statements can be used like
 
     switch (value) {
         case value -> {
             code...
-        };
+        }
         case value -> {
             code...
-        };
+        }
         default -> {
             code...
-        };
-    };
+        }
+    }
 
 ## #include
 

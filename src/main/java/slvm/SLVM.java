@@ -322,7 +322,7 @@ public class SLVM {
             }
             case "newLine" -> buffer.add("cr");
             case "ask" -> {
-                System.out.print(getNextVarValue() + "? ");
+                System.out.print(getNextVarValue());
                 a = new Scanner(System.in).nextLine();
             }
             case "setCloudVar" -> {}
@@ -375,6 +375,7 @@ public class SLVM {
                     throw new VMException("Array index " + index + " out of bounds for length " + arraySize);
             }
             case "getValueAtPointerOfA" -> a = ram[(int) getIntValue(a)];
+            /*
             case "metadataLine" -> line = getNext();
             case "metadataFilename" -> fileName = getNext();
             case "stackPushA" -> varStack.push(a);
@@ -412,6 +413,7 @@ public class SLVM {
             case "stackNotEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "0" : "1");
             case "stackSmallerThan" -> varStack.push(getIntValue(varStack.pop()) < getIntValue(varStack.pop()) ? "1" : "0");
             case "stackLargerThan" -> varStack.push(getIntValue(varStack.pop()) > getIntValue(varStack.pop()) ? "1" : "0");
+             */
             default -> throw new VMException("Unknown instruction '" + instruction + "'");
         }
     }

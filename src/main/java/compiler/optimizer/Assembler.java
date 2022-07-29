@@ -15,10 +15,12 @@ public class Assembler {
         else
             lines = new String[]{assembly};
 
-        for (String line : lines) {
-            if (line.startsWith(":"))
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+
+            if (line.startsWith(":") && !lines[i - 1].equals("ldi"))
                 labels.put(line.substring(1), line_n);
-            else if (!line.startsWith(";")){
+            else if (!line.startsWith(";")) {
                 line_n++;
                 ret.append("\n").append(line);
             }

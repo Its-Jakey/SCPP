@@ -32,6 +32,7 @@ public class Compiler implements SCPPListener {
     public static boolean optimize = false;
     static Program currentProgram;
     static LinkedHashMap<String, Program> compiledLibraries;
+    static Stack<Switch> switches;
 
     public static String getPrefixMessage() {
         return currentProgram.fileName + " " + row + ":" + col;
@@ -153,6 +154,7 @@ public class Compiler implements SCPPListener {
         constants = new LinkedHashMap<>();
         tempStack = new Stack<>();
         compiledLibraries = new LinkedHashMap<>();
+        switches = new Stack<>();
 
         appendLine("jmp\n%ENTRY%");
     }
@@ -203,6 +205,17 @@ public class Compiler implements SCPPListener {
     private static void checkInFunction(String keyword) {
         if (currentProgram.currentFunction == null)
             errorAndKill("Cannot use '" + keyword + "' keyword outside of function scope");
+    }
+
+    private void combineNamespace(Namespace source, Namespace definition) {
+        for (Map.Entry<String, Function> function : source.functions.entrySet()) {
+            if (function.getValue().isPublic)
+                definition.functions.put(function.getKey(), Function.changeVisibility(function.getValue(), false));
+        }
+        for (Map.Entry<String, Variable> variable : source.variables.entrySet()) {
+            if (variable.getValue().isPublic())
+                definition.variables.put(variable.getKey(), new Variable(variable.getValue(), false));
+        }
     }
 
 
@@ -272,6 +285,13 @@ public class Compiler implements SCPPListener {
         currentProgram.currentNamespace.context = ctx;
         currentProgram.currentNamespace.fileName = currentProgram.fileName;
         currentProgram.currentNamespace.level = currentProgram.level;
+        SCPPParser.IdListContext uses = ctx.idList();
+
+        while (uses != null) {
+            Namespace namespace = getNamespace(uses.ID().getText());
+            combineNamespace(namespace, currentProgram.currentNamespace);
+            uses = uses.idList();
+        }
         appendLine(":" + currentProgram.currentNamespace.name);
     }
 
@@ -402,6 +422,55 @@ public class Compiler implements SCPPListener {
     }
 
     @Override
+    public void enterSwitchStatement(SCPPParser.SwitchStatementContext ctx) {
+        evaluateExpression(ctx.expression());
+        String exit = createTemp();
+        endTemp();
+
+        appendLine("storeAtVar\n" + createTemp());
+        switches.push(new Switch(endTemp(), exit));
+    }
+
+    @Override
+    public void exitSwitchStatement(SCPPParser.SwitchStatementContext ctx) {
+        appendLine(":" + switches.pop().exitPoint);
+    }
+
+    @Override
+    public void enterCaseStatement(SCPPParser.CaseStatementContext ctx) {
+        appendLine(":" + ctx.hashCode());
+
+        evaluateExpression(ctx.expression());
+        appendLine("boolEqualWithVar\n" + switches.peek().switchValue);
+        SCPPParser.SwitchStatementContext ssc = ((SCPPParser.SwitchStatementContext) ctx.parent);
+
+        if (ssc.caseStatement().indexOf(ctx) == ssc.caseStatement().size() - 1) { //If this is the last case statement in the chain
+            if (ssc.defaultStatement() != null)
+                appendLine("jf\n%" + switches.peek().hashCode() + "default%"); //Jump to the default statement
+            else
+                appendLine("jf\n%" + switches.peek().exitPoint + "%");
+        } else {
+            //Not a real label for some reason
+            appendLine("jf\n%" + ssc.caseStatement().get(ssc.caseStatement().indexOf(ctx) + 1).hashCode() + "%"); //Jump to the next case statement
+        }
+    }
+
+    @Override
+    public void exitCaseStatement(SCPPParser.CaseStatementContext ctx) {
+        appendLine("jmp\n%" + switches.peek().exitPoint + "%");
+    }
+
+    @Override
+    public void enterDefaultStatement(SCPPParser.DefaultStatementContext ctx) {
+        appendLine(":" + switches.peek().hashCode());
+    }
+
+    @Override
+    public void exitDefaultStatement(SCPPParser.DefaultStatementContext ctx) {
+
+    }
+
+    @Override
     public void enterNonBracketStatement(SCPPParser.NonBracketStatementContext ctx) {
 
     }
@@ -418,6 +487,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitVariableDeclaration(SCPPParser.VariableDeclarationContext ctx) {
+
         if (currentProgram.currentNamespace == null) {
             error("Cannot define variable outside of namespace bounds");
             return;
@@ -493,6 +563,7 @@ public class Compiler implements SCPPListener {
             evaluateExpression(ctx.expression());
             appendLine("storeAtVar\n" + currentProgram.currentFunction.returnVariable);
         }
+        //TODO: Make inline functions non-returnable
         appendLine("ret");
     }
 
@@ -609,6 +680,16 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitValue(SCPPParser.ValueContext ctx) {
+
+    }
+
+    @Override
+    public void enterIdList(SCPPParser.IdListContext ctx) {
+
+    }
+
+    @Override
+    public void exitIdList(SCPPParser.IdListContext ctx) {
 
     }
 

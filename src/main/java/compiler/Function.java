@@ -4,7 +4,6 @@ import antlr.SCPPParser;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Function {
     final LinkedHashMap<String, String> arguments;
@@ -18,6 +17,7 @@ public class Function {
     Program program = null;
     boolean inline = false;
     int level = 0;
+    final List<String> rawArgs;
 
     public Function(String name, List<String> arguments, boolean isPublic, String variablePrefix) {
         this.arguments = new LinkedHashMap<>();
@@ -26,9 +26,24 @@ public class Function {
         this.name = name;
         this.variablePrefix = variablePrefix;
         this.returnVariable = variablePrefix + name + "_return";
+        this.rawArgs = arguments;
 
         for (String arg : arguments)
             this.arguments.put(arg, variablePrefix + name + "_" + arg);
+    }
+
+    private Function(Function source, boolean isPublic) {
+        this.arguments = source.arguments;
+        this.localVariables = source.localVariables;
+        this.isPublic = isPublic;
+        this.returnVariable = source.returnVariable;
+        this.name = source.name;
+        this.variablePrefix = source.variablePrefix;
+        this.context = source.context;
+        this.program = source.program;
+        this.inline = source.inline;
+        this.level = source.level;
+        this.rawArgs = source.rawArgs;
     }
 
     public String getLabel() {
@@ -63,6 +78,10 @@ public class Function {
                 System.exit( 1);
             }
         }
+    }
+
+    public static Function changeVisibility(Function function, boolean isPublic) {
+        return new Function(function, isPublic);
     }
 
     public static String getID(String name, List<SCPPParser.ExpressionContext> args) {
