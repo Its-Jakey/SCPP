@@ -1,5 +1,7 @@
 package slvm;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -7,18 +9,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.FileWriter;
 import java.util.*;
 import java.util.List;
 
 public class SLVM {
     private final String[] instructions;
-    private final String[] ram = new String[0xFFFFFFF];
+    private static final String[] ram = new String[0xFFFFFFF];
     private final boolean[] usedAddresses = new boolean[ram.length];
     static int pc;
     private String a;
     private boolean isMouseDown;
     private final List<Integer> keysPressed;
-    private final LinkedHashMap<String, Integer> variables;
+    private static LinkedHashMap<String, Integer> variables;
     private final Stack<Integer> stack;
     private final Stack<String> varStack;
     private boolean running;
@@ -48,8 +51,10 @@ public class SLVM {
         return getIntValue(getNext());
     }
     private int getVar(String varName) {
-        if (!variables.containsKey(varName))
+        if (!variables.containsKey(varName)) {
             variables.put(varName, allocateMemory(1));
+            ram[variables.get(varName)] = "0";
+        }
         return variables.get(varName);
     }
     private List<Cluster> createClusters(int maxSize) {
@@ -94,9 +99,11 @@ public class SLVM {
     }
 
     private void setNextVarValue(String value) {
+        String varName = getNext();
+
         if (value == null)
-            throw new VMException("Value is null");
-        ram[getVar(getNext())] = value;
+            throw new VMException("Program attempted to set variable '" + varName + "' to a null value");
+        ram[getVar(varName)] = value;
     }
 
     private boolean getBoolValue(String value) {
@@ -132,6 +139,18 @@ public class SLVM {
         return a.equals(b);
     }
 
+    static void logVars(String path) {
+        try {
+            FileWriter writer = new FileWriter(path);
+            for (String var : variables.keySet()) {
+                writer.write(var + " = " + ram[variables.get(var)] + "\n");
+            }
+            writer.close();
+        } catch (Exception e) {
+            throw new VMException(e.getMessage());
+        }
+    }
+
     private int mapKey(String key) {
         return switch (key) {
             case "left arrow" -> KeyEvent.VK_LEFT;
@@ -147,6 +166,7 @@ public class SLVM {
     }
 
     private final JFrame frame;
+    static List<Integer> subroutines;
 
 
     public SLVM(String program) {
@@ -159,6 +179,7 @@ public class SLVM {
         this.graphics = new VMGraphics();
         this.keysPressed = new ArrayList<>();
         this.image = new BufferedImage(480, 360, BufferedImage.TYPE_INT_RGB);
+        subroutines = new ArrayList<>();
         //metadata = new ArrayList<>();
 
         frame = new JFrame();
@@ -195,6 +216,8 @@ public class SLVM {
             }
         });
         frame.add(panel);
+
+        Arrays.fill(ram, "0");
     }
 
     public void run() {
@@ -213,23 +236,25 @@ public class SLVM {
             case "jts" -> {
                 stack.push(pc + 1);
                 pc = (int) getNextInt();
+                subroutines.add(pc);
                 //metadata.add(new Metadata(fileName, line));
             }
             case "ret" -> {
                 pc = stack.pop();
+                subroutines.remove(subroutines.size() - 1);
                 //metadata.remove(metadata.size() - 1);
             }
-            case "addWithVar" -> a = String.valueOf(getIntValue(a) + getNextIntVar());
-            case "subWithVar" -> a = String.valueOf(getIntValue(a) - getIntValue(getNextVarValue()));
-            case "mulWithVar" -> a = String.valueOf(getIntValue(a) * getIntValue(getNextVarValue()));
-            case "divWithVar" -> a = String.valueOf(getIntValue(a) / getIntValue(getNextVarValue()));
-            case "bitwiseLsfWithVar" -> a = String.valueOf(((int) getIntValue(a)) << ((int) getIntValue(getNextVarValue())));
-            case "bitwiseRsfWithVar" -> a = String.valueOf(((int) getIntValue(a)) >> ((int) getIntValue(getNextVarValue())));
-            case "bitwiseAndWithVar" -> a = String.valueOf(((int) getIntValue(a)) & ((int) getIntValue(getNextVarValue())));
-            case "bitwiseOrWithVar" -> a = String.valueOf(((int) getIntValue(a)) | ((int) getIntValue(getNextVarValue())));
-            case "modWithVar" -> a = String.valueOf(getIntValue(a) % getIntValue(getNextVarValue()));
-            case "print" -> System.out.print(a);
-            case "println" -> System.out.println(a);
+            case "addWithVar" -> a = getInt(getIntValue(a) + getNextIntVar());
+            case "subWithVar" -> a = getInt(getIntValue(a) - getIntValue(getNextVarValue()));
+            case "mulWithVar" -> a = getInt(getIntValue(a) * getIntValue(getNextVarValue()));
+            case "divWithVar" -> a = getInt(getIntValue(a) / getIntValue(getNextVarValue()));
+            case "bitwiseLsfWithVar" -> a = getInt(((int) getIntValue(a)) << ((int) getIntValue(getNextVarValue())));
+            case "bitwiseRsfWithVar" -> a = getInt(((int) getIntValue(a)) >> ((int) getIntValue(getNextVarValue())));
+            case "bitwiseAndWithVar" -> a = getInt(((int) getIntValue(a)) & ((int) getIntValue(getNextVarValue())));
+            case "bitwiseOrWithVar" -> a = getInt(((int) getIntValue(a)) | ((int) getIntValue(getNextVarValue())));
+            case "modWithVar" -> a = getInt(getIntValue(a) % getIntValue(getNextVarValue()));
+            case "print" -> System.out.print(StringEscapeUtils.unescapeJava(a));
+            case "println" -> System.out.println(StringEscapeUtils.unescapeJava(a));
             case "jmp" -> pc = (int) getNextInt();
             case "jt" -> pc = getBoolValue(a) ? (int) getNextInt() : pc + 1;
             case "jf" -> pc = !getBoolValue(a) ? (int) getNextInt() : pc + 1;
@@ -246,7 +271,7 @@ public class SLVM {
             case "boolEqualWithVar" -> a = getBool(isEqual(a, getNextVarValue()));
             case "largerThanOrEqualWithVar" -> a = getBool(getIntValue(a) >= getIntValue(getNextVarValue()));
             case "smallerThanOrEqualWithVar" -> a = getBool(getIntValue(a) <= getIntValue(getNextVarValue()));
-            case "boolNotEqualsWithVar" -> a = getBool(!isEqual(a, getNextVarValue()));
+            case "boolNotEqualWithVar" -> a = getBool(!isEqual(a, getNextVarValue()));
             case "smallerThanWithVar" -> a = getBool(getIntValue(a) < getIntValue(getNextVarValue()));
             case "largerThanWithVar" -> a = getBool(getIntValue(a) > getIntValue(getNextVarValue()));
             case "putPixel" -> buffer.addAll(List.of("putPixel", getNextVarValue(), getNextVarValue()));
@@ -302,7 +327,16 @@ public class SLVM {
             case "isKeyPressed" -> a = getBool(keysPressed.contains(mapKey(getNextVarValue())));
             case "createArray" -> {}
             case "createColor" -> a = String.valueOf(new Color((int) getNextIntVar(), (int) getNextIntVar(), (int) getNextIntVar()).getRGB());
-            case "charAt" -> a = getNextVarValue().charAt((int) getNextIntVar()) + "";
+            case "charAt" -> {
+                String str = getNextVarValue();
+                int charAt = (int) getNextIntVar();
+
+                if (charAt >= str.length())
+                    a = "";
+                else
+                    a = str.charAt(charAt) + "";
+            }
+            case "sizeOf" -> a = getInt(getNextVarValue().length());
             case "contains" -> a = getBool(getNextVarValue().contains(getNextVarValue()));
             case "join" -> a = a + getNextVarValue();
             case "setStrokeWidth" -> buffer.addAll(List.of("setStroke", getNextVarValue()));

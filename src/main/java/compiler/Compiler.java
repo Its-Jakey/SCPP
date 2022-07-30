@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -33,6 +34,7 @@ public class Compiler implements SCPPListener {
     static Program currentProgram;
     static LinkedHashMap<String, Program> compiledLibraries;
     static Stack<Switch> switches;
+    public static Path topLevelPath;
 
     public static String getPrefixMessage() {
         return currentProgram.fileName + " " + row + ":" + col;
@@ -91,6 +93,7 @@ public class Compiler implements SCPPListener {
 
     public static String compile(Path file) throws IOException {
         long startTime = System.currentTimeMillis();
+        topLevelPath = file.getParent();
 
         init();
         currentProgram = new Program(file.getFileName().toString());
@@ -127,13 +130,18 @@ public class Compiler implements SCPPListener {
     private static Program compileProgram(Path path, int level) {
         Program programBackup = currentProgram != null ? currentProgram.clone() : null;
 
+        if (!path.toFile().exists())
+            errorAndKill("File '" + path.getFileName() + "' does not exist");
+
         currentProgram = new Program(path.getFileName().toString());
         currentProgram.level = level;
 
         try {
             runWalker(CharStreams.fromPath(path));
+        } catch (NoSuchFileException e) {
+            errorAndKill("File not found: " + currentProgram.fileName);
         } catch (IOException e) {
-            errorAndKill("Failed to compile file '" + currentProgram.fileName + "', " + e.getMessage());
+            errorAndKill("Failed to compile file '" + currentProgram.fileName + "', " + e);
             failed = true;
         }
         Program compiledProgram = currentProgram.clone();
@@ -337,17 +345,42 @@ public class Compiler implements SCPPListener {
         currentProgram.currentFunction = null;
     }
 
+    private final Stack<Integer> ifCounts = new Stack<>();
+    private static int ifCount = 0;
+
     @Override
     public void enterIfStatement(SCPPParser.IfStatementContext ctx) {
-        checkInFunction("if");
-
-        evaluateExpression(ctx.expression());
-        appendLine("jf\n%" + createTemp() + "%");
+        ifCounts.push(ifCount++);
     }
 
     @Override
     public void exitIfStatement(SCPPParser.IfStatementContext ctx) {
-        appendLine(":" + endTemp());
+        ifCounts.pop();
+    }
+
+    @Override
+    public void enterIfPart(SCPPParser.IfPartContext ctx) {
+        checkInFunction("if");
+
+        evaluateExpression(ctx.expression());
+        appendLine("jf\n%ifExit" + ifCounts.peek() + "%");
+    }
+
+    @Override
+    public void exitIfPart(SCPPParser.IfPartContext ctx) {
+        if (((SCPPParser.IfStatementContext) ctx.getParent()).elsePart() != null)
+            appendLine("jmp\n%elseExit" + ifCounts.peek() + "%");
+        appendLine(":ifExit" + ifCounts.peek());
+    }
+
+    @Override
+    public void enterElsePart(SCPPParser.ElsePartContext ctx) {
+        appendLine(":elseEnter" + ifCounts.peek());
+    }
+
+    @Override
+    public void exitElsePart(SCPPParser.ElsePartContext ctx) {
+        appendLine(":elseExit" + ifCounts.peek());
     }
 
     @Override
@@ -462,7 +495,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterDefaultStatement(SCPPParser.DefaultStatementContext ctx) {
-        appendLine(":" + switches.peek().hashCode());
+        appendLine(":" + switches.peek().hashCode() + "default");
     }
 
     @Override
@@ -528,9 +561,14 @@ public class Compiler implements SCPPListener {
         else
             var = getVariable(currentProgram.currentNamespace, currentProgram.currentFunction, variable.ID().getText());
 
-        if (ctx.VARIABLE_SINGLE_MODIFIER() != null || ctx.VARIABLE_MODIFIER() != null) //TODO: Implement variable single modifiers
-            error("++, --, +=, -=, *=, and /= have not been implemented yet");
-        else {
+        if (ctx.VARIABLE_MODIFIER() != null) //TODO: Implement variable modifiers
+            error("+=, -=, *=, and /= have not been implemented yet");
+        else if (ctx.VARIABLE_SINGLE_MODIFIER() != null) {
+            if (ctx.VARIABLE_SINGLE_MODIFIER().getText().equals("++"))
+                appendLine("inc\n" + var.id());
+            else
+                appendLine("dec\n" + var.id());
+        } else {
             if (ctx.arrayIndex() != null) {
                 setValueAtArrayIndex(var.id(), ctx.arrayIndex(), ctx.expression());
                 return;
@@ -609,7 +647,7 @@ public class Compiler implements SCPPListener {
             }
             log("Included library <" + lib + ">");
         } else {
-            compileLowerLevel(Path.of(ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1)));
+            compileLowerLevel(Path.of(topLevelPath + "/" + ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1)));
         }
     }
 

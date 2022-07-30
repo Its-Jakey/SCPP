@@ -67,6 +67,26 @@ public interface SCPPListener extends ParseTreeListener {
 	 */
 	void exitIfStatement(SCPPParser.IfStatementContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link SCPPParser#ifPart}.
+	 * @param ctx the parse tree
+	 */
+	void enterIfPart(SCPPParser.IfPartContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SCPPParser#ifPart}.
+	 * @param ctx the parse tree
+	 */
+	void exitIfPart(SCPPParser.IfPartContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link SCPPParser#elsePart}.
+	 * @param ctx the parse tree
+	 */
+	void enterElsePart(SCPPParser.ElsePartContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SCPPParser#elsePart}.
+	 * @param ctx the parse tree
+	 */
+	void exitElsePart(SCPPParser.ElsePartContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link SCPPParser#whileLoop}.
 	 * @param ctx the parse tree
 	 */

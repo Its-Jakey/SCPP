@@ -11,8 +11,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 public class Main {
-    private static String getOutputPathFromInput(String input) {
-        return input.substring(0, input.lastIndexOf('/') + 1) + input.substring(input.lastIndexOf('/') + 1, input.lastIndexOf('.')) + ".slvm.txt";
+    private static String replaceExtension(String input, String extension) {
+        return input.substring(0, input.lastIndexOf('/') + 1) + input.substring(input.lastIndexOf('/') + 1, input.lastIndexOf('.')) + extension;
     }
     public static void main(String[] args) throws IOException {
         Options options = new Options();
@@ -22,11 +22,13 @@ public class Main {
         Option outputOpt = new Option("o", "output", true, "Output file");
         Option testOpt = new Option("t", "test", false, "Compiles all files in /examples directory");
         Option runOpt = new Option("r", "run", false, "Emulates the program after compiling");
+        Option rawOpt = new Option("d", "debug", true, "Writes the raw SLVM assembly to the specified file");
 
         options.addOption(inputOpt);
         options.addOption(outputOpt);
         options.addOption(testOpt);
         options.addOption(runOpt);
+        options.addOption(rawOpt);
 
         CommandLine cmd = null;
         CommandLineParser parser = new BasicParser();
@@ -44,7 +46,7 @@ public class Main {
             for (File f : Objects.requireNonNull(new File("examples/").listFiles())) {
                 if (!f.getName().endsWith(".sc"))
                     continue;
-                Files.writeString(Path.of(getOutputPathFromInput(f.getAbsolutePath())), Compiler.compile(f.toPath()));
+                Files.writeString(Path.of(replaceExtension(f.getAbsolutePath(), ".slvm.txt")), Compiler.compile(f.toPath()));
             }
             return;
         }
@@ -53,9 +55,11 @@ public class Main {
         String output = cmd.getOptionValue("o");
 
         if (output == null)
-            output = getOutputPathFromInput(input);
+            output = replaceExtension(input, ".slvm.txt");
 
         String asm = Compiler.compile(Path.of(input));
+        if (cmd.hasOption("d"))
+            Files.writeString(Path.of(cmd.getOptionValue("d")), Compiler.getRawOutput());
         Files.writeString(Path.of(output), asm);
         if (cmd.hasOption("r")) {
             new SLVM(asm).run();

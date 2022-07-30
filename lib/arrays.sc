@@ -22,6 +22,7 @@ public namespace arrays {
 
         for (i from 0 to oldSize)
             ret[i] = array[i];
+        free(array, oldSize);
         return ret;
     }
 

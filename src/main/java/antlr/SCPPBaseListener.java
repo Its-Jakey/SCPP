@@ -87,6 +87,30 @@ public class SCPPBaseListener implements SCPPListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterIfPart(SCPPParser.IfPartContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitIfPart(SCPPParser.IfPartContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterElsePart(SCPPParser.ElsePartContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitElsePart(SCPPParser.ElsePartContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterWhileLoop(SCPPParser.WhileLoopContext ctx) { }
 	/**
 	 * {@inheritDoc}

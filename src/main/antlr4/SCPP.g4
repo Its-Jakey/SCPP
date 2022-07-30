@@ -24,7 +24,13 @@ functionDeclaration
 : pub='public'? inline='inline'? 'func' ID '(' functionArgumentArray? ')' codeBlock;
 
 ifStatement
+: ifPart elsePart?;
+
+ifPart
 : 'if' '(' expression ')' codeBlock;
+
+elsePart
+: 'else' codeBlock;
 
 whileLoop
 : 'while' '(' expression ')' codeBlock;

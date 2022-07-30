@@ -83,14 +83,8 @@ public class Evaluators {
                 else
                     varName = getVariable(currentProgram.currentNamespace, currentProgram.currentFunction, variable.ID().getText()).id();
             }
-            else if (ctx.functionCall() != null) {
+            else if (ctx.functionCall() != null)
                 varName = evaluateFunctionCall(ctx.functionCall()).returnVariable;
-
-                if (ctx.arrayIndex() != null)
-                    loadValueAtArrayIndex(varName, ctx.arrayIndex());
-                else
-                    appendLine("loadAtVar\n" + varName);
-            }
             if (ctx.arrayIndex() != null)
                 loadValueAtArrayIndex(varName, ctx.arrayIndex());
             else
@@ -98,7 +92,7 @@ public class Evaluators {
             return;
         }
         if (ctx.STRING() != null)
-            appendLine("ldi\n" + StringEscapeUtils.escapeJava(ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1)));
+            appendLine("ldi\n" + ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1));
         else if (ctx.INT() != null)
             appendLine("ldi\n" + ctx.INT().getText());
         else if (ctx.HEX() != null)

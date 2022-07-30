@@ -123,6 +123,8 @@ The strings library helps with editing strings
 > **repeat(string, times);** Returns string repeated times
 >
 > **indexOfChar(string, char);** Returns the first index of char in string
+> 
+> **split(string, char);** Returns an array of strings split by char, with the size of the array at splitSize
 
 ## time
 

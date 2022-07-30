@@ -1,4 +1,8 @@
+#include <arrays>
+
 public namespace strings {
+    public var splitSize;
+
     public func charAt(string, idx) {
         return _asm_("charAt", string, idx);
     }
@@ -33,5 +37,30 @@ public namespace strings {
     }
     public func indexOfChar(string, char) {
         return _asm_("indexOfChar", string, char);
+    }
+
+    public func split(text, at) { //at must be a char
+        var ret = malloc(0);
+        var cur = "";
+        splitSize = 0;
+
+        for (i from 0 to sizeOf(text)) {
+            if (charAt(text, i) == at) {
+
+                splitSize = splitSize + 1;
+                ret = arrays::resizeArray(ret, splitSize - 1, splitSize);
+                ret[splitSize - 1] = cur;
+
+                cur = "";
+            } else {
+                cur = concat(cur, charAt(text, i));
+            }
+        }
+        if (cur != "") {
+            splitSize = splitSize + 1;
+            ret = arrays::resizeArray(ret, splitSize - 1, splitSize);
+            ret[splitSize - 1] = cur;
+        }
+        return ret;
     }
 }
