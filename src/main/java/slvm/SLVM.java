@@ -325,7 +325,6 @@ public class SLVM {
             case "loadAtVarWithOffset" -> a = ram[(int) (getVar(getNext()) + getIntValue(getNextVarValue()))];
             case "storeAtVarWithOffset" -> ram[(int) (getVar(getNext()) + getIntValue(getNextVarValue()))] = a;
             case "isKeyPressed" -> a = getBool(keysPressed.contains(mapKey(getNextVarValue())));
-            case "createArray" -> {}
             case "createColor" -> a = String.valueOf(new Color((int) getNextIntVar(), (int) getNextIntVar(), (int) getNextIntVar()).getRGB());
             case "charAt" -> {
                 String str = getNextVarValue();
@@ -370,7 +369,6 @@ public class SLVM {
             }
             case "getValueAtPointer" -> a = ram[(int) getNextIntVar()];
             case "setValueAtPointer" -> ram[(int) getNextIntVar()] = a;
-            case "typeOf" -> {}
             case "runtimeMillis" -> a = getInt(System.currentTimeMillis() - runStart);
             case "free" -> {
                 int addr = (int) getNextIntVar();
@@ -408,10 +406,6 @@ public class SLVM {
                 if (index < -1 || index >= arraySize)
                     throw new VMException("Array index " + index + " out of bounds for length " + arraySize);
             }
-            case "getValueAtPointerOfA" -> a = ram[(int) getIntValue(a)];
-            /*
-            case "metadataLine" -> line = getNext();
-            case "metadataFilename" -> fileName = getNext();
             case "stackPushA" -> varStack.push(a);
             case "stackPopA" -> a = varStack.pop();
             case "stackPush" -> varStack.push(getNextVarValue());
@@ -447,7 +441,6 @@ public class SLVM {
             case "stackNotEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "0" : "1");
             case "stackSmallerThan" -> varStack.push(getIntValue(varStack.pop()) < getIntValue(varStack.pop()) ? "1" : "0");
             case "stackLargerThan" -> varStack.push(getIntValue(varStack.pop()) > getIntValue(varStack.pop()) ? "1" : "0");
-             */
             default -> throw new VMException("Unknown instruction '" + instruction + "'");
         }
     }

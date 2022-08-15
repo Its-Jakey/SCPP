@@ -74,8 +74,7 @@ Notation:
 | `drawText`                | [text] | draws the text [text] at the current position                                                                                                          
 | `loadAtVarWithOffset`     | [var], [offset] | sets the a register to the value of the variable [var] offset by [offset]                                                                              
 | `storeAtVarWithOffset`    | [var], [offset] | sets the variable [var] offset by [offset] to the value of the a register                                                                              
-| `isKeyPressed`            | [key] | sets the a register to 1 if the key [key] is pressed, 0 otherwise                                                                                      
-| `createArray`             | [var], [size] | creates an array of size [size] and sets the variable [var] to the address of the array. Does nothing if a variable with the same name already exists. 
+| `isKeyPressed`            | [key] | sets the a register to 1 if the key [key] is pressed, 0 otherwise                                                                                       
 | `createColor`             | [r], [g], [b] | creates a color with the given RGB values and sets the a register to the address of the color                                                          
 | `charAt`                  | [var], [index] | sets the a register to the character at index [index] in the string stored in [var]                                                                    
 | `sizeOf`                  | [var] | sets the a register to the size of the string stored in [var]
@@ -83,8 +82,7 @@ Notation:
 | `join`                    | [text] | sets the a register to (a register) + text                                                                                                              
 | `setStrokeWidth`          | [width] | sets the stroke width to [width]                                                                                                                       
 | `inc`                     | [var] | increments the variable [var] by 1                                                                                                                     
-| `dec`                     | [var] | decrements the variable [var] by 1                                                                                                                     
-| `arraySize`               | [var] | sets the a register to the size of the array stored in [var]                                                                                           
+| `dec`                     | [var] | decrements the variable [var] by 1                                                                                                                      
 | `graphicsFlip`            | | flips the graphics buffer                                                                                                                              
 | `newLine`                 | | draws a new line                                                                                                                                       
 | `ask`                     | [text] | displays the text [text] and waits for the user to enter a string. Sets the a register to the string entered.                                          
@@ -95,7 +93,6 @@ Notation:
 | `imalloc`                 | size | allocates size cells of memory and sets the address of the first to the a register
 | `getValueAtPointer`       | [var] | sets the A register to the value at memory address [var]
 | `setValueAtPointer`       | [var] | sets the memory address at [var] to the A register
-| `typeOf`                  | [var] | returns the type of [var] in string form (12: 'int', 6.2: 'float', 'sup': 'string')
 | `runtimeMillis`           | | Sets the A register to the current runtime length in milliseconds
 | `free`                    | [addr], [words] | Frees [words] at [addr]
 | `getVarAddress`           | [var] | Sets the A register to address of the [var]
