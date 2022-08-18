@@ -11,8 +11,7 @@ public class VMGraphics {
 
     static {
         try {
-            font = Font.createFont(Font.TRUETYPE_FONT,
-                    new File("font.ttf")).deriveFont(Font.PLAIN, 8);
+            font = Font.createFont(Font.TRUETYPE_FONT, compiler.Compiler.class.getResourceAsStream("/font.ttf")).deriveFont(Font.PLAIN, 8);
         } catch (FontFormatException | IOException e) {
             throw new RuntimeException(e);
         }

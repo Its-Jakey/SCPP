@@ -1,0 +1,31 @@
+@text 0 args$ getPath readFromFile !text
+
+text! '\n' splitString
+
+@linesSize !linesSize
+@lines !lines
+
+gosub printLines
+'Enter a command or enter "help" for help' println
+
+:loop
+    @command '> ' input !command
+    command! 'line' = gosubif editLine
+    command! 'list' = gosubif printLines
+    goto loop
+
+:editLine
+    @line_n 'line number: ' input !line_n
+    line_n! lines$ println
+    'new value: ' input line_n! $lines
+    return
+
+:printLines
+    @i 0 !i
+    :printLoop
+        i! linesSize! < 1 < gotoif endPrintLines
+        i! '\t' . i! lines$ . println
+        i! 1 + !i # i++
+        goto printLoop
+    :endPrintLines
+        return
