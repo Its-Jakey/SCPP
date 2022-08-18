@@ -58,12 +58,14 @@ public class Main {
             output = replaceExtension(input, ".slvm.txt");
 
         String asm = Compiler.compile(Path.of(input));
-        if (cmd.hasOption("d"))
-            Files.writeString(Path.of(cmd.getOptionValue("d")), Compiler.getRawOutput());
-        Files.writeString(Path.of(output), asm);
-        if (cmd.hasOption("r")) {
-            new SLVM(asm).run();
-            System.exit(0);
+        if (!Compiler.failed) {
+            if (cmd.hasOption("d"))
+                Files.writeString(Path.of(cmd.getOptionValue("d")), Compiler.getRawOutput());
+            Files.writeString(Path.of(output), asm);
+            if (cmd.hasOption("r")) {
+                new SLVM(asm).run();
+                System.exit(0);
+            }
         }
     }
 }

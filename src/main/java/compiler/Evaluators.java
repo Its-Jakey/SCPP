@@ -99,8 +99,18 @@ public class Evaluators {
             appendLine("ldi\n" + Integer.parseInt(ctx.HEX().getText().substring(2), 16));
         else if (ctx.BIN() != null)
             appendLine("ldi\n" + Integer.parseInt(ctx.BIN().getText().substring(2), 2));
-        else
+        else if (ctx.argumentArray() != null)
             assignArgumentArrayToArray(ctx.argumentArray());
+        else {
+            SCPPParser.ConditionalValueContext val = ctx.conditionalValue();
+
+            evaluateExpression(val.expression(1));
+            appendLine("storeAtVar\nconditionalTrue");
+            evaluateExpression(val.expression(2));
+            appendLine("storeAtVar\nconditionalFalse");
+            evaluateExpression(val.expression(0));
+            appendLine("conditionalValueSet\nconditionalTrue\nconditionalFalse");
+        }
     }
 
     static void evaluateExpression(SCPPParser.ExpressionContext ctx) {

@@ -102,3 +102,29 @@ Notation:
 | `decA`                    |  | subtracts one from the A register
 | `arrayBoundsCheck`        | [arr], [index] | Checks if the [index] is within the bounds of the [arr]. If not, stops the program.
 | `getValueAtPointerOfA`    |  | Sets the A register to the value the A register is pointing to.
+| `stackPushA`                |                        | pushes the A register onto the stack
+| `stackPopA`                 |                        | pops the top value off the stack onto the A register
+| `stackPush`                 | [value]                | pushes [value] onto the stack
+| `stackPop`                  | [dest]                 | pops the top value off the stock onto [dest]
+| `stackPeekA`                |                        | sets the A register to the value on the top of the stack
+| `stackPeek`                 | [dest]                 | sets [dest] to the value on the top of the stack
+| `stackInc`                  |                        | increments the value on the top of the stack
+| `stackDec`                  |                        | decrements the value on the top of the stack
+| `stackAdd`                  |                        | performes add with the top 2 values of the stack, and replaces them with the result
+| `stackSub`                  |                        | performes sub with the top 2 values of the stack, and replaces them with the result
+| `stackMul`                  |                        | performes mul with the top 2 values of the stack, and replaces them with the result
+| `stackDiv`                  |                        | performes div with the top 2 values of the stack, and replaces them with the result
+| `stackBitwiseLsf`           |                        | performes bitwise leftshift with the top 2 values of the stack, and replaces them with the result
+| `stackBitwiseRsf`           |                        | performes bitwise rightshift with the top 2 values of the stack, and replaces them with the result
+| `stackBitwiseAnd`           |                        | performes bitwise and with the top 2 values of the stack, and replaces them with the result
+| `stackBitwiseOr`            |                        | performes bitwise or with the top 2 values of the stack, and replaces them with the result
+| `stackMod`                  |                        | performes modulo with the top 2 values of the stack, and replaces them with the result
+| `stackBoolAnd`              |                        | performes boolean and with the top 2 values of the stack, and replaces them with the result
+| `stackBoolOr`               |                        | performes boolean or with the top 2 values of the stack, and replaces them with the result
+| `stackBoolEqual`            |                        | performes boolean equal with the top 2 values of the stack, and replaces them with the result
+| `stackLargerThanOrEqual`    |                        | performes larger than or equal with the top 2 values of the stack, and replaces them with the result
+| `stackSmallerThanOrEqual`   |                        | performes smaller than or equal with the top 2 values of the stack, and replaces them with the result
+| `stackNotEqual`             |                        | performes not equal with the top 2 values of the stack, and replaces them with the result
+| `stackSmallerThan`          |                        | performes smaller than with the top 2 values of the stack, and replaces them with the result
+| `stackLargerThan`           |                        | performes larger than with the top 2 values of the stack, and replaces them with the result
+| `conditionalValueSet`       | [trueValue] [falseValue] | sets the A register to [trueValue] if the A register is 1, and [falseValue] otherwise

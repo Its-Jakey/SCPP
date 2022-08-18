@@ -20,9 +20,8 @@ public namespace strings {
         var ret = "";
         var i = start;
 
-        while (i < end) {
-            ret = concat(ret, charAt(string, i));
-        }
+        while (i < end)
+            ret ..= charAt(string, i);
         return ret;
     }
     public func substring(string, start) {
@@ -32,7 +31,7 @@ public namespace strings {
         var ret = "";
 
         for (i from 0 to times)
-            ret = concat(ret, string);
+            ret ..= string;
         return ret;
     }
     public func indexOfChar(string, char) {
@@ -53,7 +52,7 @@ public namespace strings {
 
                 cur = "";
             } else {
-                cur = concat(cur, charAt(text, i));
+                cur ..= charAt(text, i);
             }
         }
         if (cur != "") {

@@ -17,9 +17,11 @@ public class InfixToPostfix {
         String x = op.operator();
 
         return switch (x) {
-            case "^", "|", "&", "==", "!=", "<", ">", ">=", "<=" -> 2;
-            case "*", "/", "%" -> 1;
-            case "+", "-", "<<", ">>", "&&", "||" -> 0;
+            case "+", "-" -> 1;
+            case "..", "*", "/", "%" -> 2;
+            case "&", "|" -> 3;
+            case "<", ">", "<=", ">=", "==", "!=", "<<", ">>" -> 4;
+            case "&&", "||" -> 5;
             default -> -1;
         };
     }
@@ -56,6 +58,7 @@ public class InfixToPostfix {
     public static void evaluatePostfix(List<ValueOrOperatorOrID> postfix) {
 
         Stack<ValueOrOperatorOrID> stack = new Stack<>();
+        /*
         StringBuilder visualPostfix = new StringBuilder();
 
         for (ValueOrOperatorOrID post : postfix) {
@@ -64,6 +67,7 @@ public class InfixToPostfix {
             else
                 visualPostfix.append(" ").append(post.value().getText()).append(" ");
         }
+        */
 
         for (ValueOrOperatorOrID x : postfix) {
             if (x.value() != null || x.getId() != null) {
@@ -86,28 +90,9 @@ public class InfixToPostfix {
                 appendLine("storeAtVar\nb");
                 appendLine("loadAtVar\na");
 
-                String prefix = switch (op) {
-                    case "+" -> "add";
-                    case "-" -> "sub";
-                    case "*" -> "mul";
-                    case "/" -> "div";
-                    case ">>" -> "bitwiseRsf";
-                    case "<<" -> "bitwiseLsf";
-                    case "&" -> "bitwiseAnd";
-                    case "|" -> "bitwiseOr";
-                    case "&&" -> "boolAnd";
-                    case "||" -> "boolOr";
-                    case "==" -> "boolEqual";
-                    case "!=" -> "boolNotEqual";
-                    case "<" -> "smallerThan";
-                    case ">" -> "largerThan";
-                    case "%" -> "mod";
-                    case ">=" -> "largerThanOrEqual";
-                    case "<=" -> "smallerThanOrEqual";
-                    default -> throw new IllegalStateException("Unexpected operator: " + op);
-                };
+                String prefix = Compiler.getOperatorInstruction(op);
 
-                appendLine(prefix + "WithVar\nb");
+                appendLine(prefix + "\nb");
                 appendLine("storeAtVar\ntmp" + Compiler.createTemp());
                 ValueOrOperatorOrID tmp = new ValueOrOperatorOrID(null, null);
                 tmp.setId("tmp" + Compiler.endTemp());

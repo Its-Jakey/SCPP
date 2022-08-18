@@ -30,7 +30,8 @@ public class SLVM {
     private final JPanel panel;
     private long runStart;
     private final BufferedImage image;
-    static String fileName = null, line = "0";
+    static String $fileName = null, $line = "0";
+    private Point lastKnownMousePosition = new Point(0, 0);
     //static List<Metadata> metadata;
 
     private double getIntValue(String value) {
@@ -293,31 +294,49 @@ public class SLVM {
                 double toRound = getIntValue(getNextVarValue());
                 double digits = getIntValue(getNextVarValue());
 
-                a = getInt(Math.round(toRound * Math.pow(10, digits)) / Math.pow(10, digits));
+                if (digits == 0)
+                    a = getInt(Math.round(toRound));
+                else
+                    a = getInt(Math.round(toRound * Math.pow(10, digits)) / Math.pow(10, digits));
             }
             case "floor" -> {
                 double toRound = getIntValue(getNextVarValue());
                 double digits = getIntValue(getNextVarValue());
 
-                a = getInt(Math.floor(toRound * Math.pow(10, digits)) / Math.pow(10, digits));
+                if (digits == 0)
+                    a = getInt(Math.floor(toRound));
+                else
+                    a = getInt(Math.floor(toRound * Math.pow(10, digits)) / Math.pow(10, digits));
             }
             case "ceil" -> {
                 double toRound = getIntValue(getNextVarValue());
                 double digits = getIntValue(getNextVarValue());
 
-                a = getInt(Math.ceil(toRound * Math.pow(10, digits)) / Math.pow(10, digits));
+                if (digits == 0)
+                    a = getInt(Math.ceil(toRound));
+                else
+                    a = getInt(Math.ceil(toRound * Math.pow(10, digits)) / Math.pow(10, digits));
             }
             case "cos" -> a = getInt(Math.cos(getIntValue(getNextVarValue())));
             case "sin" -> a = getInt(Math.sin(getIntValue(getNextVarValue())));
             case "sqrt" -> a = getInt(Math.sqrt(getIntValue(getNextVarValue())));
             case "atan2" -> a = getInt(Math.atan2(getIntValue(getNextVarValue()), getIntValue(getNextVarValue())));
             case "mouseDown" -> a = getBool(isMouseDown);
-            case "mouseX" -> a = getInt(MouseInfo.getPointerInfo().getLocation().x);
-            case "mouseY" -> a = getInt(MouseInfo.getPointerInfo().getLocation().y);
+            case "mouseX" -> {
+                Point pos = (panel.getMousePosition() == null ? lastKnownMousePosition : panel.getMousePosition());
+                lastKnownMousePosition = pos;
+                a = getInt(pos.x);
+            }
+            case "mouseY" -> {
+                Point pos = (panel.getMousePosition() == null ? lastKnownMousePosition : panel.getMousePosition());
+                lastKnownMousePosition = pos;
+                a = getInt(pos.y);
+            }
             case "sleep" -> {
                 try {
                     Thread.sleep((long) getIntValue(getNextVarValue()));
-                } catch (Exception e) {
+                } catch (IllegalArgumentException ignored){}
+                catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -441,6 +460,24 @@ public class SLVM {
             case "stackNotEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "0" : "1");
             case "stackSmallerThan" -> varStack.push(getIntValue(varStack.pop()) < getIntValue(varStack.pop()) ? "1" : "0");
             case "stackLargerThan" -> varStack.push(getIntValue(varStack.pop()) > getIntValue(varStack.pop()) ? "1" : "0");
+            case "usage" -> {
+                int used = 0;
+                for (boolean usedAddress : usedAddresses)
+                    if (usedAddress)
+                        used++;
+
+                a = String.valueOf(used);
+            }
+            case "conditionalValueSet" -> {
+                boolean condition = getBoolValue(a);
+                String trueValue = getNextVarValue();
+                String falseValue = getNextVarValue();
+
+                if (condition)
+                    a = trueValue;
+                else
+                    a = falseValue;
+            }
             default -> throw new VMException("Unknown instruction '" + instruction + "'");
         }
     }

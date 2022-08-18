@@ -146,7 +146,6 @@ namespace wireframe {
             free(camEnd, 3);
             free(drawStart, 2);
             free(drawEnd, 2);
-        
         }
     }
 
@@ -188,6 +187,16 @@ namespace wireframe {
         wireCount = wireCount + 8;
     }
 
+    public func rotateZ3D(pos, theta) {
+        var sinTheta = math::sin(theta);
+        var cosTheta = math::cos(theta);
+        pos[0][0] = pos[0][0] * cosTheta - pos[0][1] * sinTheta;
+        pos[0][1] = pos[0][0] * sinTheta + pos[0][1] * cosTheta;
+        pos[1][0] = pos[1][0] * cosTheta - pos[1][1] * sinTheta;
+        pos[1][1] = pos[1][0] * sinTheta + pos[1][1] * cosTheta;
+        return pos;
+    }
+
     public func createHorizontalCircle(pos, size, color, steps) {
         var angleIncrease = 2 * (PI / steps);
         var angle = angleIncrease;
@@ -198,8 +207,22 @@ namespace wireframe {
             angle = angle + angleIncrease;
             
 
-            wires[wireCount] = {start, end, color};
+            wires[wireCount] = {start, end, color}; 
             wireCount = wireCount + 1;
+        }
+    }
+
+    public func create3DSphere(pos, size, color, steps) {
+        var angleIncrease = 2 * (PI / steps);
+        var angle = angleIncrease;
+        var stepSteps = math::sqrt(steps);
+        var currentSize = size / stepSteps;
+        currentSize /= 2;
+        var sizeInc = size / stepSteps;
+
+        for (i from 0 to stepSteps + 1) {
+            createHorizontalCircle(relative(pos, 0, 0, currentSize), currentSize, color, steps);
+            currentSize += sizeInc;
         }
     }
 
@@ -219,7 +242,7 @@ namespace wireframe {
         createCube({100, 50, 0}, 50, 0x00FFFF);
         createCube({50, 50, 0}, 25, 0xFF0000);
         createPyramid({110, 110, 0}, 50, 0x0000FF);
-        //createHorizontalCircle({200, 200, 0}, 50, 0xFFFF00, 24);
+        //create3DSphere({200, 200, 0}, 50, 0xFFFF00, 25);
     }
 
     public func main() {
@@ -233,7 +256,7 @@ namespace wireframe {
                 moveCamera();
                 draw();
                 graphics::setColor(0x00FF00);
-                graphics::drawString(concat("FPS: ", math::round(FPS, 2)));
+                graphics::drawString("FPS: "..math::round(FPS, 2));
                 graphics::flip();
 
                 var end = time::getRuntimeMillis();
@@ -246,6 +269,7 @@ namespace wireframe {
                     while (input::isKeyPressed("escape")) {}
                     running = 0;
                 }
+                //println(_asm_("usage"));
             }
             graphics::setColor(0xFFFFFF);
             graphics::goto(230, 172);

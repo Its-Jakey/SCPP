@@ -103,11 +103,15 @@ expression
 value
 : (variable arrayIndex?)
 | (functionCall arrayIndex?)
+| conditionalValue
 | STRING
 | INT
 | HEX
 | BIN
 | '{' argumentArray '}';
+
+conditionalValue
+: '?' expression ':' expression '!' expression;
 
 idList
 : ID (',' idList)?;
@@ -122,7 +126,7 @@ HEX: '0x' ([0-9] | [a-f] | [A-F])+;
 BIN: '0b' ('0' | '1')+;
 VARIABLE_MODIFIER: OPERATOR '=';
 VARIABLE_SINGLE_MODIFIER: '++' | '--';
-OPERATOR: '+' | '-' | '*' | '/' | '>>' | '<<' | '|' | '&' | '^' | '%' | '||' | '&&' | '>' | '<' | '==' | '!=' | '>=' | '<=';
+OPERATOR: '+' | '-' | '*' | '/' | '>>' | '<<' | '|' | '&' | '^' | '%' | '||' | '&&' | '>' | '<' | '==' | '!=' | '>=' | '<=' | '..';
 WS: [ \t\r\n]+ -> skip;
 SINGLE_COMMENT: '//' .*? '\n' -> skip;
 BLOCK_COMMENT: '/*' .*? '*/' -> skip;

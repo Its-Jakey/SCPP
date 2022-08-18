@@ -11,8 +11,10 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
@@ -22,7 +24,7 @@ import static compiler.Evaluators.*;
 
 public class Compiler implements SCPPListener {
     private static StringBuilder output;
-    private static boolean failed;
+    public static boolean failed;
     private static int row, col;
     private static List<String> messages;
     private static Stack<Integer> tempStack;
@@ -35,6 +37,7 @@ public class Compiler implements SCPPListener {
     static LinkedHashMap<String, Program> compiledLibraries;
     static Stack<Switch> switches;
     public static Path topLevelPath;
+    static Stack<List<String>> scopes;
 
     public static String getPrefixMessage() {
         return currentProgram.fileName + " " + row + ":" + col;
@@ -73,8 +76,13 @@ public class Compiler implements SCPPListener {
     }
 
     private Program getLibrary(String lib) {
-        if (!compiledLibraries.containsKey(lib))
-            compiledLibraries.put(lib, compileProgram(Path.of("lib/" + lib + ".sc"), 0));
+        if (!compiledLibraries.containsKey(lib)) {
+            try {
+                compiledLibraries.put(lib, compileProgramFromString(CharStreams.fromReader(new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/" + lib + ".sc")))), 0, lib + ".sc"));
+            } catch (IOException e) {
+                errorAndKill(e.toString());
+            }
+        }
         return compiledLibraries.get(lib);
     }
 
@@ -128,22 +136,24 @@ public class Compiler implements SCPPListener {
     }
 
     private static Program compileProgram(Path path, int level) {
-        Program programBackup = currentProgram != null ? currentProgram.clone() : null;
-
         if (!path.toFile().exists())
             errorAndKill("File '" + path.getFileName() + "' does not exist");
 
-        currentProgram = new Program(path.getFileName().toString());
+        try {
+            return compileProgramFromString(CharStreams.fromPath(path), level, path.getFileName().toString());
+        } catch (IOException e) {
+            errorAndKill(e.toString());
+        }
+        return null;
+    }
+
+    private static Program compileProgramFromString(CharStream code, int level, String filename) {
+        Program programBackup = currentProgram != null ? currentProgram.clone() : null;
+
+        currentProgram = new Program(filename);
         currentProgram.level = level;
 
-        try {
-            runWalker(CharStreams.fromPath(path));
-        } catch (NoSuchFileException e) {
-            errorAndKill("File not found: " + currentProgram.fileName);
-        } catch (IOException e) {
-            errorAndKill("Failed to compile file '" + currentProgram.fileName + "', " + e);
-            failed = true;
-        }
+        runWalker(code);
         Program compiledProgram = currentProgram.clone();
         currentProgram = programBackup;
         return compiledProgram;
@@ -163,6 +173,7 @@ public class Compiler implements SCPPListener {
         tempStack = new Stack<>();
         compiledLibraries = new LinkedHashMap<>();
         switches = new Stack<>();
+        scopes = new Stack<>();
 
         appendLine("jmp\n%ENTRY%");
     }
@@ -213,6 +224,32 @@ public class Compiler implements SCPPListener {
     private static void checkInFunction(String keyword) {
         if (currentProgram.currentFunction == null)
             errorAndKill("Cannot use '" + keyword + "' keyword outside of function scope");
+    }
+
+    public static String getOperatorInstruction(String op) {
+        if (op.equals(".."))
+            return "join";
+
+        return switch (op) {
+            case "+" -> "add";
+            case "-" -> "sub";
+            case "*" -> "mul";
+            case "/" -> "div";
+            case ">>" -> "bitwiseRsf";
+            case "<<" -> "bitwiseLsf";
+            case "&" -> "bitwiseAnd";
+            case "|" -> "bitwiseOr";
+            case "&&" -> "boolAnd";
+            case "||" -> "boolOr";
+            case "==" -> "boolEqual";
+            case "!=" -> "boolNotEqual";
+            case "<" -> "smallerThan";
+            case ">" -> "largerThan";
+            case "%" -> "mod";
+            case ">=" -> "largerThanOrEqual";
+            case "<=" -> "smallerThanOrEqual";
+            default -> throw new IllegalStateException("Unexpected operator: " + op);
+        } + "WithVar";
     }
 
     private void combineNamespace(Namespace source, Namespace definition) {
@@ -532,6 +569,7 @@ public class Compiler implements SCPPListener {
 
             varName = currentProgram.currentNamespace.name + "_" + currentProgram.currentFunction.name + "_" + ctx.ID().getText();
             currentProgram.currentFunction.localVariables.put(ctx.ID().getText(), varName);
+            scopes.peek().add(ctx.ID().getText());
         } else {
             if (currentProgram.currentNamespace.variables.containsKey(ctx.ID().getText()))
                 error("Duplicate variable '" + ctx.ID().getText() + "'");
@@ -561,9 +599,15 @@ public class Compiler implements SCPPListener {
         else
             var = getVariable(currentProgram.currentNamespace, currentProgram.currentFunction, variable.ID().getText());
 
-        if (ctx.VARIABLE_MODIFIER() != null) //TODO: Implement variable modifiers
-            error("+=, -=, *=, and /= have not been implemented yet");
-        else if (ctx.VARIABLE_SINGLE_MODIFIER() != null) {
+        if (ctx.VARIABLE_MODIFIER() != null) {
+            if (ctx.arrayIndex() != null)
+                error("Cannot use array index with +=, -=, *=, and /=");
+            else {
+                evaluateExpression(ctx.expression());
+                appendLine(getOperatorInstruction(ctx.VARIABLE_MODIFIER().getText().substring(0, ctx.VARIABLE_MODIFIER().getText().length() - 1)) + "\n" + var.id());
+                appendLine("storeAtVar\n" + var.id());
+            }
+        } else if (ctx.VARIABLE_SINGLE_MODIFIER() != null) {
             if (ctx.VARIABLE_SINGLE_MODIFIER().getText().equals("++"))
                 appendLine("inc\n" + var.id());
             else
@@ -653,12 +697,18 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterCodeBlock(SCPPParser.CodeBlockContext ctx) {
-
+        if (currentProgram.currentFunction != null)
+            scopes.push(new ArrayList<>());
     }
 
     @Override
     public void exitCodeBlock(SCPPParser.CodeBlockContext ctx) {
+        if (currentProgram.currentFunction != null) {
+            List<String> variablesToRemove = scopes.pop();
 
+            for (String variable : variablesToRemove)
+                currentProgram.currentFunction.localVariables.remove(variable);
+        }
     }
 
     @Override
@@ -718,6 +768,16 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitValue(SCPPParser.ValueContext ctx) {
+
+    }
+
+    @Override
+    public void enterConditionalValue(SCPPParser.ConditionalValueContext ctx) {
+
+    }
+
+    @Override
+    public void exitConditionalValue(SCPPParser.ConditionalValueContext ctx) {
 
     }
 

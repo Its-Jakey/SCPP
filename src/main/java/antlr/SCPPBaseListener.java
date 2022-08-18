@@ -351,6 +351,18 @@ public class SCPPBaseListener implements SCPPListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterConditionalValue(SCPPParser.ConditionalValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitConditionalValue(SCPPParser.ConditionalValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterIdList(SCPPParser.IdListContext ctx) { }
 	/**
 	 * {@inheritDoc}

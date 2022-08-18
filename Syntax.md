@@ -40,6 +40,7 @@ Values can be combined using the following operators:
 |   `!=`   | Not equal to
 |   `>=`   | Greater than or equal to
 |   `<=`   | Less than or equal to
+|   `..`   | String concat
 <!--- |    `!`   | Not -->
 
 ## Defining Variables
@@ -147,6 +148,10 @@ If statements are used like
 While statements are used like
 
     while (condition) {code...}
+
+If statements can also be used as an operand like
+
+    ?condition :trueValue !falseValue
 
 ## For loops
 

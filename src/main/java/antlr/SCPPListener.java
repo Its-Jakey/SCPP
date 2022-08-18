@@ -287,6 +287,16 @@ public interface SCPPListener extends ParseTreeListener {
 	 */
 	void exitValue(SCPPParser.ValueContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link SCPPParser#conditionalValue}.
+	 * @param ctx the parse tree
+	 */
+	void enterConditionalValue(SCPPParser.ConditionalValueContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link SCPPParser#conditionalValue}.
+	 * @param ctx the parse tree
+	 */
+	void exitConditionalValue(SCPPParser.ConditionalValueContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link SCPPParser#idList}.
 	 * @param ctx the parse tree
 	 */

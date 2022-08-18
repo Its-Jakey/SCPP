@@ -18,7 +18,6 @@ public class Builtins extends Namespace {
         addAllArgs(new _asm_());
         add(new malloc());
         add(new exit());
-        addAllArgs(new concat());
         add(new free());
     }
 
@@ -37,7 +36,7 @@ public class Builtins extends Namespace {
 
         @Override
         public void call(List<SCPPParser.ExpressionContext> args) {
-            for (int i = 0; i < args.size() - 1; i++) {
+            for (int i = 0; i < args.size(); i++) {
                 evaluateExpression(args.get(i));
                 appendLine("print");
 
@@ -46,8 +45,7 @@ public class Builtins extends Namespace {
                     appendLine("print");
                 }
             }
-            evaluateExpression(args.get(args.size() - 1));
-            appendLine("println");
+            appendLine("ldi\n\nprintln");
         }
     }
 
@@ -124,29 +122,6 @@ public class Builtins extends Namespace {
         public void call(List<SCPPParser.ExpressionContext> args) {
             super.checkArgumentCount(args, false);
             appendLine("done");
-        }
-    }
-
-    private static class concat extends Function {
-
-        public concat() {
-            super("concat", List.of(), true, "__builtins__");
-        }
-
-        @Override
-        public void call(List<SCPPParser.ExpressionContext> args) {
-            if (args.size() < 2)
-                error("concat takes at least 2 arguments, but " + args.size() + " were given.");
-            appendLine("ldi\n");
-            appendLine("storeAtVar\n" + super.returnVariable);
-
-            for (SCPPParser.ExpressionContext arg : args) {
-                evaluateExpression(arg);
-                appendLine("storeAtVar\nconcatTmp");
-                appendLine("loadAtVar\n" + super.returnVariable);
-                appendLine("join\nconcatTmp");
-                appendLine("storeAtVar\n" + super.returnVariable);
-            }
         }
     }
 

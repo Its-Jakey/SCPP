@@ -8,6 +8,15 @@ public namespace math {
     public func ceil(x, places) {
         return _asm_("ceil", x, places);
     }
+    public func round(x) {
+        return _asm_("round", x, 0);
+    }
+    public func floor(x) {
+        return _asm_("floor", x, 0);
+    }
+    public func ceil(x) {
+        return _asm_("ceil", x, 0);
+    }
     public func sin(x) {
         return _asm_("sin", x);
     }
@@ -44,5 +53,12 @@ public namespace math {
         if (x < 0)
             return (0 - x);
         return x;
+    }
+    public func pow(x, y) {
+        var ret = 0;
+
+        for (i from 0 to y)
+            ret = ret + x;
+        return ret;
     }
 }
