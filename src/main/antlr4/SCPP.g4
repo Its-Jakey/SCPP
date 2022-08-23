@@ -55,7 +55,7 @@ nonBracketStatement
 | returnStatement;
 
 variableDeclaration
-: pub=PUBLIC? 'var' ID ('=' expression)?;
+: pub='public'? 'var' ID ('=' expression)?;
 
 variableValueChange
 : variable arrayIndex? (VARIABLE_SINGLE_MODIFIER | (VARIABLE_MODIFIER | '=') expression);

@@ -25,7 +25,7 @@ public class SCPPParser extends Parser {
 		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
 		T__31=32, T__32=33, T__33=34, T__34=35, STRING=36, LIBRARY=37, ID=38, 
 		INT=39, HEX=40, BIN=41, VARIABLE_MODIFIER=42, VARIABLE_SINGLE_MODIFIER=43, 
-		OPERATOR=44, WS=45, COMMENT=46, SINGLE_COMMENT=47, BLOCK_COMMENT=48, PUBLIC=49;
+		OPERATOR=44, WS=45, COMMENT=46, SINGLE_COMMENT=47, BLOCK_COMMENT=48;
 	public static final int
 		RULE_program = 0, RULE_statement = 1, RULE_bracketStatement = 2, RULE_namespaceDeclaration = 3, 
 		RULE_functionDeclaration = 4, RULE_ifStatement = 5, RULE_ifPart = 6, RULE_elsePart = 7, 
@@ -57,7 +57,7 @@ public class SCPPParser extends Parser {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		"STRING", "LIBRARY", "ID", "INT", "HEX", "BIN", "VARIABLE_MODIFIER", "VARIABLE_SINGLE_MODIFIER", 
-		"OPERATOR", "WS", "COMMENT", "SINGLE_COMMENT", "BLOCK_COMMENT", "PUBLIC"
+		"OPERATOR", "WS", "COMMENT", "SINGLE_COMMENT", "BLOCK_COMMENT"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -160,7 +160,6 @@ public class SCPPParser extends Parser {
 				case T__24:
 				case T__25:
 				case ID:
-				case PUBLIC:
 					{
 					setState(60);
 					statement();
@@ -179,7 +178,7 @@ public class SCPPParser extends Parser {
 				setState(64); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << T__2) | (1L << T__7) | (1L << T__8) | (1L << T__9) | (1L << T__11) | (1L << T__12) | (1L << T__16) | (1L << T__22) | (1L << T__24) | (1L << T__25) | (1L << ID) | (1L << COMMENT) | (1L << PUBLIC))) != 0) );
+			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << T__2) | (1L << T__7) | (1L << T__8) | (1L << T__9) | (1L << T__11) | (1L << T__12) | (1L << T__16) | (1L << T__22) | (1L << T__24) | (1L << T__25) | (1L << ID) | (1L << COMMENT))) != 0) );
 			}
 		}
 		catch (RecognitionException re) {
@@ -223,25 +222,15 @@ public class SCPPParser extends Parser {
 		try {
 			setState(71);
 			_errHandler.sync(this);
-			switch (_input.LA(1)) {
-			case T__1:
-			case T__2:
-			case T__7:
-			case T__8:
-			case T__9:
-			case T__11:
-			case T__12:
-			case T__16:
+			switch ( getInterpreter().adaptivePredict(_input,2,_ctx) ) {
+			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(66);
 				bracketStatement();
 				}
 				break;
-			case T__22:
-			case T__24:
-			case ID:
-			case PUBLIC:
+			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(67);
@@ -250,15 +239,13 @@ public class SCPPParser extends Parser {
 				match(T__0);
 				}
 				break;
-			case T__25:
+			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(70);
 				directive();
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -431,7 +418,6 @@ public class SCPPParser extends Parser {
 			case T__24:
 			case T__25:
 			case ID:
-			case PUBLIC:
 				{
 				setState(91);
 				_errHandler.sync(this);
@@ -1086,7 +1072,6 @@ public class SCPPParser extends Parser {
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
-		public TerminalNode PUBLIC() { return getToken(SCPPParser.PUBLIC, 0); }
 		public VariableDeclarationContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -1111,10 +1096,10 @@ public class SCPPParser extends Parser {
 			setState(178);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==PUBLIC) {
+			if (_la==T__1) {
 				{
 				setState(177);
-				((VariableDeclarationContext)_localctx).pub = match(PUBLIC);
+				((VariableDeclarationContext)_localctx).pub = match(T__1);
 				}
 			}
 
@@ -1561,7 +1546,6 @@ public class SCPPParser extends Parser {
 						case T__24:
 						case T__25:
 						case ID:
-						case PUBLIC:
 							{
 							setState(220);
 							statement();
@@ -1598,7 +1582,6 @@ public class SCPPParser extends Parser {
 			case T__24:
 			case T__25:
 			case ID:
-			case PUBLIC:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(228);
@@ -2201,7 +2184,7 @@ public class SCPPParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\63\u012e\4\2\t\2"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\62\u012e\4\2\t\2"+
 		"\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13"+
 		"\t\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -2260,7 +2243,7 @@ public class SCPPParser extends Parser {
 		"\u00aa\7\30\2\2\u00aa\u00ab\7\27\2\2\u00ab\u00ac\5,\27\2\u00ac\33\3\2"+
 		"\2\2\u00ad\u00b2\5\36\20\2\u00ae\u00b2\5 \21\2\u00af\u00b2\5\"\22\2\u00b0"+
 		"\u00b2\5$\23\2\u00b1\u00ad\3\2\2\2\u00b1\u00ae\3\2\2\2\u00b1\u00af\3\2"+
-		"\2\2\u00b1\u00b0\3\2\2\2\u00b2\35\3\2\2\2\u00b3\u00b5\7\63\2\2\u00b4\u00b3"+
+		"\2\2\u00b1\u00b0\3\2\2\2\u00b2\35\3\2\2\2\u00b3\u00b5\7\4\2\2\u00b4\u00b3"+
 		"\3\2\2\2\u00b4\u00b5\3\2\2\2\u00b5\u00b6\3\2\2\2\u00b6\u00b7\7\31\2\2"+
 		"\u00b7\u00ba\7(\2\2\u00b8\u00b9\7\32\2\2\u00b9\u00bb\5\66\34\2\u00ba\u00b8"+
 		"\3\2\2\2\u00ba\u00bb\3\2\2\2\u00bb\37\3\2\2\2\u00bc\u00be\5\64\33\2\u00bd"+

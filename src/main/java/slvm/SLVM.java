@@ -253,6 +253,8 @@ public class SLVM {
             case "bitwiseRsfWithVar" -> a = getInt(((int) getIntValue(a)) >> ((int) getIntValue(getNextVarValue())));
             case "bitwiseAndWithVar" -> a = getInt(((int) getIntValue(a)) & ((int) getIntValue(getNextVarValue())));
             case "bitwiseOrWithVar" -> a = getInt(((int) getIntValue(a)) | ((int) getIntValue(getNextVarValue())));
+            case "bitwiseXorWithVar" -> a = getInt(((int) getIntValue(a)) ^ ((int) getIntValue(getNextVarValue())));
+            case "bitwiseNot" -> a = String.valueOf(~((int)getNextIntVar()));
             case "modWithVar" -> a = getInt(getIntValue(a) % getIntValue(getNextVarValue()));
             case "print" -> Console.out.print(StringEscapeUtils.unescapeJava(a));
             case "println" -> Console.out.println(StringEscapeUtils.unescapeJava(a));

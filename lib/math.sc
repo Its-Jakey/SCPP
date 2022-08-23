@@ -29,6 +29,9 @@ public namespace math {
     public func atan2(x, y) {
         return _asm_("atan2", x, y);
     }
+    public func bitwiseNot(x) {
+        return _asm_("bitwiseNot", x);
+    }
     public func negate(x) {
         if (x > 0)
             return 0 - x;

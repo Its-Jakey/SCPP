@@ -92,7 +92,7 @@ public class Compiler implements SCPPListener {
         parser.addErrorListener(new BaseErrorListener() {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-                error("line " + line + ":" + charPositionInLine + " " + msg);
+                errorAndKill("line " + line + ":" + charPositionInLine + " " + msg);
             }
         });
         ParseTreeWalker walker = new ParseTreeWalker();
@@ -248,6 +248,7 @@ public class Compiler implements SCPPListener {
             case "%" -> "mod";
             case ">=" -> "largerThanOrEqual";
             case "<=" -> "smallerThanOrEqual";
+            case "^" -> "bitwiseXor";
             default -> throw new IllegalStateException("Unexpected operator: " + op);
         } + "WithVar";
     }
