@@ -185,7 +185,6 @@ public class SLVM {
         //metadata = new ArrayList<>();
 
         frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(480, 360);
 
         panel = new JPanel() {
@@ -479,6 +478,8 @@ public class SLVM {
                 else
                     a = falseValue;
             }
+            case "toAsciiValue" -> a = String.valueOf((int) getNextVarValue().charAt(0));
+            case "fromAsciiValue" -> a = String.valueOf((char) getIntValue(a));
             default -> throw new VMException("Unknown instruction '" + instruction + "'", this);
         }
     }

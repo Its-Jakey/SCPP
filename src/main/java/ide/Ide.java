@@ -7,6 +7,7 @@ import ide.syntax.SyntaxListener;
 import slvm.SLVM;
 
 import javax.swing.*;
+import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -54,7 +55,7 @@ public class Ide extends JFrame {
     private void updateConfig() {
         //config.editOption("font", font.getFamily(), font.isBold() ? "bold" : "plain", String.valueOf(font.getSize()));
         projectConfig.editOption("tabs", Arrays.stream(tabs.getComponents()).map(c -> ((CodeEditor) c).path).filter(Objects::nonNull).toArray(String[]::new));
-        config.editOption("currentProject", projectDir);
+        //config.editOption("currentProject", projectDir);
     }
 
     public static Config getDefaultProjectConfig() {
@@ -240,6 +241,7 @@ public class Ide extends JFrame {
         console.setFont(font);
         console.setEditable(true);
         console.setBounds(0, getHeight() - 200, getWidth(), 200);
+        console.getDocument().putProperty(PlainDocument.tabSizeAttribute, 4);
         add(console);
 
         fileHierarchy = new FileTree(new File(projectDir), this);
@@ -261,6 +263,7 @@ public class Ide extends JFrame {
         this.config = config;
 
         openProject();
+        addListeners();
 
 
         outputStream = new PrintStream(new OutputStream() {
@@ -288,7 +291,7 @@ public class Ide extends JFrame {
         super.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                tabs.setBounds(200, 0, getWidth(), getHeight() - 200);
+                tabs.setBounds(200, 0, getWidth() - 200, getHeight() - 200);
                 console.setBounds(0, getHeight() - 200, getWidth(), 200);
                 fileHierarchy.setBounds(0, 0, 200, getHeight() - 200);
             }

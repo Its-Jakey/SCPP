@@ -128,3 +128,5 @@ Notation:
 | `stackSmallerThan`          |                        | performes smaller than with the top 2 values of the stack, and replaces them with the result
 | `stackLargerThan`           |                        | performes larger than with the top 2 values of the stack, and replaces them with the result
 | `conditionalValueSet`       | [trueValue] [falseValue] | sets the A register to [trueValue] if the A register is 1, and [falseValue] otherwise
+| `toAsciiValue`              | [char] | sets the A register to the ascii value of [char]
+| `fromAsciiValue`            | [ascii] | sets the A register to the char with the ascii value of [ascii]

@@ -3,6 +3,7 @@ package ide;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.*;
@@ -15,10 +16,6 @@ public class CodeEditor extends JScrollPane {
 	final JTextPane p;
 	public String path = null;
 
-	public JEditorPane getPane() {
-		return p;
-	}
-
 	private void init(KeyListener listener) {
 		p.addKeyListener(listener);
 		setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -26,8 +23,6 @@ public class CodeEditor extends JScrollPane {
 		setWheelScrollingEnabled(true);
 		//setEnabled(false);
 		setAutoscrolls(true);
-
-		StyledDocument doc = p.getStyledDocument();
 	}
 
 	public CodeEditor(Font font, String path, KeyListener listener) {

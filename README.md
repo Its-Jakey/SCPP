@@ -1,6 +1,5 @@
 # SCPP
 
-NOTICE "++" "--" "+=" "-=" "*=" "/=" have not been implemented yet
 
 ### This programming language is **VERY** unstable! If you find a bug, please report it in the 'issues' tab.
 #### You can find documentation on the syntax [here](Syntax.md), documentation on the builtin libraries [here](Libraries.md), and the VM instruction set [here](SLVM%20Bytecode.md)

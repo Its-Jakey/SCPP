@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import javax.swing.*;
+import javax.swing.text.PlainDocument;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
@@ -49,11 +50,17 @@ public class SyntaxListener implements SCPPListener {
     }
 
     private void light(Token token, Color color) {
+        if (token == null)
+            return;
+
         StyleConstants.setForeground(sas, color);
         doc.setCharacterAttributes(token.getStartIndex(), token.getStopIndex() - token.getStartIndex(), sas, false);
     }
 
     private void light(Token start, Token end, Color color) {
+        if (start == null || end == null)
+            return;
+
         StyleConstants.setForeground(sas, color);
         doc.setCharacterAttributes(start.getStartIndex(), end.getStopIndex() - start.getStartIndex(), sas, false);
     }

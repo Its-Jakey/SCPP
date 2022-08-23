@@ -16,6 +16,12 @@ public namespace strings {
         _asm_("loadAtVar", a);
         return _asm_("join", b);
     }
+    public func toAscii(x) {
+        return _asm_("toAsciiValue", x);
+    }
+    public func fromAscii(x) {
+        return _asm_("fromAscii", x);
+    }
     public func substring(string, start, end) {
         var ret = "";
         var i = start;
