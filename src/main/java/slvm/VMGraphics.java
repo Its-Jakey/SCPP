@@ -8,6 +8,7 @@ public class VMGraphics {
     private int gp;
     private java.util.List<String> buffer;
     public static final Font font;
+    private SLVM vm;
 
     static {
         try {
@@ -26,14 +27,16 @@ public class VMGraphics {
     }
     private String getNext() {
         if (gp >= buffer.size())
-            throw new VMGraphicsException("Graphics pointer out of range");
+            throw new VMGraphicsException("Graphics pointer out of range", vm);
         return buffer.get(gp++);
     }
     private int getNextInt() {
         return getIntValue(getNext());
     }
 
-    public void process(java.util.List<String> buffer, Graphics2D g2d) {
+    public void process(java.util.List<String> buffer, Graphics2D g2d, SLVM vm) {
+        this.vm = vm;
+
         this.buffer = buffer;
         int x = 2, y = 12;
         g2d.setColor(Color.BLACK);
@@ -78,7 +81,7 @@ public class VMGraphics {
                     //System.out.println("setColor " + color);
                     g2d.setColor(new Color(color));
                 }
-                default -> throw new VMGraphicsException("Unknown GPU instruction '" + buffer.get(gp) + "'");
+                default -> throw new VMGraphicsException("Unknown GPU instruction '" + buffer.get(gp) + "'", vm);
             }
         }
     }

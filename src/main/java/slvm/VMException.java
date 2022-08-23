@@ -7,8 +7,8 @@ public class VMException extends RuntimeException {
             System.out.println(SLVM.subroutines.get(i));
         }
     }
-    public VMException(String msg) {
-        super(msg + ", at pc " + SLVM.pc);
+    public VMException(String msg, SLVM vm) {
+        super(msg + ", at pc " + vm.pc);
         //printSubroutines();
         //SLVM.logVars("vars.txt");
     }

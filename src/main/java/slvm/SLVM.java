@@ -1,5 +1,6 @@
 package slvm;
 
+import compiler.Console;
 import org.apache.commons.text.StringEscapeUtils;
 
 import javax.swing.*;
@@ -15,13 +16,13 @@ import java.util.List;
 
 public class SLVM {
     private final String[] instructions;
-    private static final String[] ram = new String[0xFFFFFFF];
+    private final String[] ram = new String[0xFFFFFFF];
     private final boolean[] usedAddresses = new boolean[ram.length];
-    static int pc;
+    int pc;
     private String a;
     private boolean isMouseDown;
     private final List<Integer> keysPressed;
-    private static LinkedHashMap<String, Integer> variables;
+    private LinkedHashMap<String, Integer> variables;
     private final Stack<Integer> stack;
     private final Stack<String> varStack;
     private boolean running;
@@ -30,7 +31,7 @@ public class SLVM {
     private final JPanel panel;
     private long runStart;
     private final BufferedImage image;
-    static String $fileName = null, $line = "0";
+    String $fileName = null, $line = "0";
     private Point lastKnownMousePosition = new Point(0, 0);
     //static List<Metadata> metadata;
 
@@ -40,12 +41,12 @@ public class SLVM {
         } catch (NumberFormatException e) {
             return 0;
         } catch (Exception e) {
-            throw new VMException(e.getMessage());
+            throw new VMException(e.getMessage(), this);
         }
     }
     private String getNext() {
         if (pc >= instructions.length)
-            throw new VMException("PC out of program range");
+            throw new VMException("PC out of program range", this);
         return instructions[pc++];
     }
     private double getNextInt() {
@@ -93,7 +94,7 @@ public class SLVM {
                 return ret;
             }
         }
-        throw new VMException("Could not allocate " + words + " words because there is no free memory");
+        throw new VMException("Could not allocate " + words + " words because there is no free memory", this);
     }
     private String getNextVarValue() {
         return ram[getVar(getNext())];
@@ -103,7 +104,7 @@ public class SLVM {
         String varName = getNext();
 
         if (value == null)
-            throw new VMException("Program attempted to set variable '" + varName + "' to a null value");
+            throw new VMException("Program attempted to set variable '" + varName + "' to a null value", this);
         ram[getVar(varName)] = value;
     }
 
@@ -140,7 +141,7 @@ public class SLVM {
         return a.equals(b);
     }
 
-    static void logVars(String path) {
+    void logVars(String path) {
         try {
             FileWriter writer = new FileWriter(path);
             for (String var : variables.keySet()) {
@@ -148,7 +149,7 @@ public class SLVM {
             }
             writer.close();
         } catch (Exception e) {
-            throw new VMException(e.getMessage());
+            throw new VMException(e.getMessage(), this);
         }
     }
 
@@ -254,8 +255,8 @@ public class SLVM {
             case "bitwiseAndWithVar" -> a = getInt(((int) getIntValue(a)) & ((int) getIntValue(getNextVarValue())));
             case "bitwiseOrWithVar" -> a = getInt(((int) getIntValue(a)) | ((int) getIntValue(getNextVarValue())));
             case "modWithVar" -> a = getInt(getIntValue(a) % getIntValue(getNextVarValue()));
-            case "print" -> System.out.print(StringEscapeUtils.unescapeJava(a));
-            case "println" -> System.out.println(StringEscapeUtils.unescapeJava(a));
+            case "print" -> Console.out.print(StringEscapeUtils.unescapeJava(a));
+            case "println" -> Console.out.println(StringEscapeUtils.unescapeJava(a));
             case "jmp" -> pc = (int) getNextInt();
             case "jt" -> pc = getBoolValue(a) ? (int) getNextInt() : pc + 1;
             case "jf" -> pc = !getBoolValue(a) ? (int) getNextInt() : pc + 1;
@@ -278,13 +279,13 @@ public class SLVM {
             case "putPixel" -> buffer.addAll(List.of("putPixel", getNextVarValue(), getNextVarValue()));
             case "putLine" -> {
                 String x0 = getNextVarValue(), y0 = getNextVarValue(), x1 = getNextVarValue(), y1 = getNextVarValue();
-                //System.out.println("Draw line from " + x0 + ", " + y0 + " to " + x1 + ", " + y1);
+                //Console.out.println("Draw line from " + x0 + ", " + y0 + " to " + x1 + ", " + y1);
                 buffer.addAll(List.of("drawLine", x0, y0, x1, y1));
             }
             case "putRect" -> buffer.addAll(List.of("fillRect", getNextVarValue(), getNextVarValue(), getNextVarValue(), getNextVarValue()));
             case "setColor" -> {
                 String color = getNextVarValue();
-                //System.out.println("setColor " + color);
+                //Console.out.println("setColor " + color);
                 buffer.addAll(List.of("setColor", color));
             }
             case "clg" -> buffer.clear();
@@ -369,12 +370,12 @@ public class SLVM {
             case "arraySize" -> {}
             case "graphicsFlip" -> {
                 frame.setVisible(true);
-                graphics.process(buffer, image.createGraphics());
+                graphics.process(buffer, image.createGraphics(), this);
                 panel.repaint();
             }
             case "newLine" -> buffer.add("cr");
             case "ask" -> {
-                System.out.print(getNextVarValue());
+                Console.out.print(getNextVarValue());
                 a = new Scanner(System.in).nextLine();
             }
             case "setCloudVar" -> {}
@@ -415,15 +416,15 @@ public class SLVM {
             case "arrayBoundsCheck" -> { //array, a: index
                 String arrayName = getNext();
                 int array = (int) getIntValue(ram[getVar(arrayName)]);
-                //System.out.println(ram[array]);
+                //Console.out.println(ram[array]);
                 int index = (int) getIntValue(a);
                 int arraySize = (int) getIntValue(ram[array - 1]);
 
                 if (ram[array - 1] == null)
-                    System.out.println("Array size is null for array '" + arrayName + "'");
+                    Console.out.println("Array size is null for array '" + arrayName + "'");
 
                 if (index < -1 || index >= arraySize)
-                    throw new VMException("Array index " + index + " out of bounds for length " + arraySize);
+                    throw new VMException("Array index " + index + " out of bounds for length " + arraySize, this);
             }
             case "stackPushA" -> varStack.push(a);
             case "stackPopA" -> a = varStack.pop();
@@ -478,7 +479,7 @@ public class SLVM {
                 else
                     a = falseValue;
             }
-            default -> throw new VMException("Unknown instruction '" + instruction + "'");
+            default -> throw new VMException("Unknown instruction '" + instruction + "'", this);
         }
     }
 }

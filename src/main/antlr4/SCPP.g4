@@ -1,7 +1,7 @@
 grammar SCPP;
 
 program
-: statement+;
+: (statement | COMMENT)+;
 
 statement
 : bracketStatement
@@ -55,7 +55,7 @@ nonBracketStatement
 | returnStatement;
 
 variableDeclaration
-: pub='public'? 'var' ID ('=' expression)?;
+: pub=PUBLIC? 'var' ID ('=' expression)?;
 
 variableValueChange
 : variable arrayIndex? (VARIABLE_SINGLE_MODIFIER | (VARIABLE_MODIFIER | '=') expression);
@@ -80,7 +80,7 @@ includeDirective
 
 
 codeBlock
-: '{' statement*? '}'
+: '{' (statement | COMMENT)*? '}'
 | statement;
 
 argumentArray
@@ -128,5 +128,6 @@ VARIABLE_MODIFIER: OPERATOR '=';
 VARIABLE_SINGLE_MODIFIER: '++' | '--';
 OPERATOR: '+' | '-' | '*' | '/' | '>>' | '<<' | '|' | '&' | '^' | '%' | '||' | '&&' | '>' | '<' | '==' | '!=' | '>=' | '<=' | '..';
 WS: [ \t\r\n]+ -> skip;
-SINGLE_COMMENT: '//' .*? '\n' -> skip;
-BLOCK_COMMENT: '/*' .*? '*/' -> skip;
+COMMENT: SINGLE_COMMENT | BLOCK_COMMENT;
+SINGLE_COMMENT: '//' .*? '\n';
+BLOCK_COMMENT: '/*' .*? '*/';

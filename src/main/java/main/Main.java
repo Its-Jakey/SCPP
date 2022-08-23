@@ -1,24 +1,32 @@
 package main;
 
 import compiler.Compiler;
+import compiler.Console;
+import ide.Config;
+import ide.Ide;
+import ide.project.ProjectSelector;
 import org.apache.commons.cli.*;
 import slvm.SLVM;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import static ide.Ide.configPath;
+import static ide.Ide.getDefaultConfig;
+
 public class Main {
     private static String replaceExtension(String input, String extension) {
         return input.substring(0, input.lastIndexOf('/') + 1) + input.substring(input.lastIndexOf('/') + 1, input.lastIndexOf('.')) + extension;
     }
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, FontFormatException {
         Options options = new Options();
 
         Option inputOpt = new Option("i", "input", true, "Input file to compile");
-        inputOpt.setRequired(true);
         Option outputOpt = new Option("o", "output", true, "Output file");
         Option testOpt = new Option("t", "test", false, "Compiles all files in /examples directory");
         Option runOpt = new Option("r", "run", false, "Emulates the program after compiling");
@@ -42,29 +50,34 @@ public class Main {
             System.exit(0);
         }
 
-        if (cmd.hasOption("t")) {
-            for (File f : Objects.requireNonNull(new File("examples/").listFiles())) {
-                if (!f.getName().endsWith(".sc"))
-                    continue;
-                Files.writeString(Path.of(replaceExtension(f.getAbsolutePath(), ".slvm.txt")), Compiler.compile(f.toPath()));
+        if (!cmd.hasOption("input"))
+            Ide.createProperInstance();
+        else {
+
+            if (cmd.hasOption("t")) {
+                for (File f : Objects.requireNonNull(new File("examples/").listFiles())) {
+                    if (!f.getName().endsWith(".sc"))
+                        continue;
+                    Files.writeString(Path.of(replaceExtension(f.getAbsolutePath(), ".slvm.txt")), Compiler.compile(f.toPath()));
+                }
+                return;
             }
-            return;
-        }
 
-        String input = cmd.getOptionValue("i");
-        String output = cmd.getOptionValue("o");
+            String input = cmd.getOptionValue("i");
+            String output = cmd.getOptionValue("o");
 
-        if (output == null)
-            output = replaceExtension(input, ".slvm.txt");
+            if (output == null)
+                output = replaceExtension(input, ".slvm.txt");
 
-        String asm = Compiler.compile(Path.of(input));
-        if (!Compiler.failed) {
-            if (cmd.hasOption("d"))
-                Files.writeString(Path.of(cmd.getOptionValue("d")), Compiler.getRawOutput());
-            Files.writeString(Path.of(output), asm);
-            if (cmd.hasOption("r")) {
-                new SLVM(asm).run();
-                System.exit(0);
+            String asm = Compiler.compile(Path.of(input));
+            if (!Compiler.failed) {
+                if (cmd.hasOption("d"))
+                    Files.writeString(Path.of(cmd.getOptionValue("d")), Compiler.getRawOutput());
+                Files.writeString(Path.of(output), asm);
+                if (cmd.hasOption("r")) {
+                    new SLVM(asm).run();
+                    System.exit(0);
+                }
             }
         }
     }

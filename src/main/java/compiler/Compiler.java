@@ -33,6 +33,7 @@ public class Compiler implements SCPPListener {
     static LinkedHashMap<String, String> constants;
     public static boolean showLogs = false;
     public static boolean optimize = false;
+    private static boolean exiting = false;
     static Program currentProgram;
     static LinkedHashMap<String, Program> compiledLibraries;
     static Stack<Switch> switches;
@@ -50,8 +51,7 @@ public class Compiler implements SCPPListener {
 
     public static void errorAndKill(String msg) {
         error(msg);
-        printMessages();
-        System.exit(1);
+        exiting = true;
     }
 
     static void log(Object msg) {
@@ -72,7 +72,7 @@ public class Compiler implements SCPPListener {
     }
 
     public static void printMessages() {
-        messages.forEach(System.out::println);
+        messages.forEach(Console.out::println);
     }
 
     private Program getLibrary(String lib) {
@@ -115,9 +115,9 @@ public class Compiler implements SCPPListener {
 
         if (failed) {
             printMessages();
-            System.err.println("Build failed in " + time / 1000d + " seconds");
+            Console.err.println("Build failed in " + time / 1000d + " seconds");
         } else
-            System.out.println("Build succeeded in " + time / 1000d + " seconds");
+            Console.out.println("Build succeeded in " + time / 1000d + " seconds");
         if (optimize)
             return Assembler.assemble(Optimizer.optimize(getRawOutput()));
         else
@@ -296,6 +296,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterNamespaceDeclaration(SCPPParser.NamespaceDeclarationContext ctx) {
+        if (exiting) return;
         log("Entered namespace '" + ctx.ID(0).getText() + "'");
 
         if (currentProgram.currentNamespace != null)
@@ -342,6 +343,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitNamespaceDeclaration(SCPPParser.NamespaceDeclarationContext ctx) {
+        if (exiting) return;
         if (ctx.codeBlock() != null) {
             NamespaceBuiltins.addTo(currentProgram.currentNamespace);
             currentProgram.namespaces.put(currentProgram.currentNamespace.name, currentProgram.currentNamespace);
@@ -353,6 +355,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterFunctionDeclaration(SCPPParser.FunctionDeclarationContext ctx) {
+        if (exiting) return;
         if (currentProgram.currentFunction != null)
             errorAndKill("Cannot define function from inside of function");
         if (currentProgram.currentNamespace == null)
@@ -375,6 +378,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitFunctionDeclaration(SCPPParser.FunctionDeclarationContext ctx) {
+        if (exiting) return;
         currentProgram.currentNamespace.functions.put(currentProgram.currentFunction.getID(), currentProgram.currentFunction);
         if (ctx.inline != null)
             appendLine("ret");
@@ -387,16 +391,19 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterIfStatement(SCPPParser.IfStatementContext ctx) {
+        if (exiting) return;
         ifCounts.push(ifCount++);
     }
 
     @Override
     public void exitIfStatement(SCPPParser.IfStatementContext ctx) {
+        if (exiting) return;
         ifCounts.pop();
     }
 
     @Override
     public void enterIfPart(SCPPParser.IfPartContext ctx) {
+        if (exiting) return;
         checkInFunction("if");
 
         evaluateExpression(ctx.expression());
@@ -405,6 +412,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitIfPart(SCPPParser.IfPartContext ctx) {
+        if (exiting) return;
         if (((SCPPParser.IfStatementContext) ctx.getParent()).elsePart() != null)
             appendLine("jmp\n%elseExit" + ifCounts.peek() + "%");
         appendLine(":ifExit" + ifCounts.peek());
@@ -412,16 +420,19 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterElsePart(SCPPParser.ElsePartContext ctx) {
+        if (exiting) return;
         appendLine(":elseEnter" + ifCounts.peek());
     }
 
     @Override
     public void exitElsePart(SCPPParser.ElsePartContext ctx) {
+        if (exiting) return;
         appendLine(":elseExit" + ifCounts.peek());
     }
 
     @Override
     public void enterWhileLoop(SCPPParser.WhileLoopContext ctx) {
+        if (exiting) return;
         checkInFunction("while");
 
         evaluateExpression(ctx.expression());
@@ -431,6 +442,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitWhileLoop(SCPPParser.WhileLoopContext ctx) {
+        if (exiting) return;
         evaluateExpression(ctx.expression());
         appendLine("jt\n%" + endTemp() + "%");
         appendLine(":" + endTemp());
@@ -438,6 +450,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterForLoop(SCPPParser.ForLoopContext ctx) {
+        if (exiting) return;
         checkInFunction("for");
         String idxName = ctx.ID().getText();
 
@@ -476,6 +489,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitForLoop(SCPPParser.ForLoopContext ctx) {
+        if (exiting) return;
         String forEnd = endTemp(), boundsCheck = endTemp();
         String varName = currentProgram.currentFunction.localVariables.get(ctx.ID().getText());
 
@@ -493,6 +507,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterSwitchStatement(SCPPParser.SwitchStatementContext ctx) {
+        if (exiting) return;
         evaluateExpression(ctx.expression());
         String exit = createTemp();
         endTemp();
@@ -503,11 +518,13 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitSwitchStatement(SCPPParser.SwitchStatementContext ctx) {
+        if (exiting) return;
         appendLine(":" + switches.pop().exitPoint);
     }
 
     @Override
     public void enterCaseStatement(SCPPParser.CaseStatementContext ctx) {
+        if (exiting) return;
         appendLine(":" + ctx.hashCode());
 
         evaluateExpression(ctx.expression());
@@ -527,11 +544,13 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitCaseStatement(SCPPParser.CaseStatementContext ctx) {
+        if (exiting) return;
         appendLine("jmp\n%" + switches.peek().exitPoint + "%");
     }
 
     @Override
     public void enterDefaultStatement(SCPPParser.DefaultStatementContext ctx) {
+        if (exiting) return;
         appendLine(":" + switches.peek().hashCode() + "default");
     }
 
@@ -557,6 +576,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitVariableDeclaration(SCPPParser.VariableDeclarationContext ctx) {
+        if (exiting) return;
 
         if (currentProgram.currentNamespace == null) {
             error("Cannot define variable outside of namespace bounds");
@@ -589,6 +609,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitVariableValueChange(SCPPParser.VariableValueChangeContext ctx) {
+        if (exiting) return;
         if (currentProgram.currentFunction == null)
             errorAndKill("Cannot change variable value outside of function bounds.");
         Variable var;
@@ -629,6 +650,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitFunctionCall(SCPPParser.FunctionCallContext ctx) {
+        if (exiting) return;
         if (!(ctx.parent instanceof SCPPParser.ValueContext))
             evaluateFunctionCall(ctx);
     }
@@ -640,6 +662,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitReturnStatement(SCPPParser.ReturnStatementContext ctx) {
+        if (exiting) return;
         checkInFunction("return");
         if (ctx.expression() != null) {
             evaluateExpression(ctx.expression());
@@ -666,6 +689,7 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitDefineDirective(SCPPParser.DefineDirectiveContext ctx) {
+        if (exiting) return;
         addConstant(ctx.ID().getText(), ctx.INT() != null ? ctx.INT().getText() : (ctx.HEX() != null ? String.valueOf(Integer.parseInt(ctx.HEX().getText().substring(2), 16)) : String.valueOf(Integer.parseInt(ctx.BIN().getText().substring(2), 2))));
         //addConstant(ctx.ID().getText(), ctx.INT().getText());
         log("Constant '" + ctx.ID().getText() + "' defined");
@@ -678,11 +702,11 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void exitIncludeDirective(SCPPParser.IncludeDirectiveContext ctx) {
-
+        if (exiting) return;
         if (ctx.LIBRARY() != null) {
             String lib = ctx.LIBRARY().getText().substring(1, ctx.LIBRARY().getText().length() - 1);
             Program program = getLibrary(lib);
-            //System.out.println(program.fileName);
+            //Console.out.println(program.fileName);
 
             for (Map.Entry<String, Namespace> namespace : program.namespaces.entrySet()) {
                 if (!namespace.getValue().isPubic || currentProgram.namespaces.containsKey(namespace.getKey()))
@@ -697,12 +721,14 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterCodeBlock(SCPPParser.CodeBlockContext ctx) {
+        if (exiting) return;
         if (currentProgram.currentFunction != null)
             scopes.push(new ArrayList<>());
     }
 
     @Override
     public void exitCodeBlock(SCPPParser.CodeBlockContext ctx) {
+        if (exiting) return;
         if (currentProgram.currentFunction != null) {
             List<String> variablesToRemove = scopes.pop();
 
