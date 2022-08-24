@@ -249,7 +249,11 @@ public class Compiler implements SCPPListener {
             case ">=" -> "largerThanOrEqual";
             case "<=" -> "smallerThanOrEqual";
             case "^" -> "bitwiseXor";
-            default -> throw new IllegalStateException("Unexpected operator: " + op);
+            default -> {
+                errorAndKill("Unexpected operator: " + op);
+                printMessages();
+                yield "";
+            }
         } + "WithVar";
     }
 
@@ -626,7 +630,8 @@ public class Compiler implements SCPPListener {
                 error("Cannot use array index with +=, -=, *=, and /=");
             else {
                 evaluateExpression(ctx.expression());
-                appendLine(getOperatorInstruction(ctx.VARIABLE_MODIFIER().getText().substring(0, ctx.VARIABLE_MODIFIER().getText().length() - 1)) + "\n" + var.id());
+                String mod = ctx.VARIABLE_MODIFIER().getText();
+                appendLine(getOperatorInstruction(mod.substring(0, mod.length() - 1)) + "\n" + var.id());
                 appendLine("storeAtVar\n" + var.id());
             }
         } else if (ctx.VARIABLE_SINGLE_MODIFIER() != null) {
@@ -704,19 +709,29 @@ public class Compiler implements SCPPListener {
     @Override
     public void exitIncludeDirective(SCPPParser.IncludeDirectiveContext ctx) {
         if (exiting) return;
+        Program program;
+
         if (ctx.LIBRARY() != null) {
             String lib = ctx.LIBRARY().getText().substring(1, ctx.LIBRARY().getText().length() - 1);
-            Program program = getLibrary(lib);
+            program = getLibrary(lib);
             //Console.out.println(program.fileName);
 
-            for (Map.Entry<String, Namespace> namespace : program.namespaces.entrySet()) {
-                if (!namespace.getValue().isPubic || currentProgram.namespaces.containsKey(namespace.getKey()))
-                    continue;
-                currentProgram.namespaces.put(namespace.getKey(), namespace.getValue());
-            }
             log("Included library <" + lib + ">");
         } else {
-            compileLowerLevel(Path.of(topLevelPath + "/" + ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1)));
+            String tmp = ctx.STRING().getText();
+            String path = topLevelPath + "/" + tmp.substring(1, tmp.length() - 1);
+
+            if (!compiledLibraries.containsKey(path))
+                compiledLibraries.put(path, compileProgram(Path.of(path), currentProgram.level + 1));
+            program = compiledLibraries.get(path);
+
+            if (program.namespaces.values().stream().anyMatch(Objects::isNull))
+                errorAndKill("Found null namespace while compiling");
+        }
+        for (Map.Entry<String, Namespace> namespace : program.namespaces.entrySet()) {
+            if (!namespace.getValue().isPubic || currentProgram.namespaces.containsKey(namespace.getKey()))
+                continue;
+            currentProgram.namespaces.put(namespace.getKey(), namespace.getValue());
         }
     }
 

@@ -11,6 +11,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.FileWriter;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.List;
 
@@ -221,7 +224,7 @@ public class SLVM {
         Arrays.fill(ram, "0");
     }
 
-    public void run() {
+    public void run() throws NoSuchAlgorithmException {
         //Arrays.fill(ram, "");
 
         runStart = System.currentTimeMillis();
@@ -229,7 +232,7 @@ public class SLVM {
             execute(instructions[pc++]);
     }
 
-    private void execute(String instruction) {
+    private void execute(String instruction) throws NoSuchAlgorithmException {
         switch (instruction) { //TODO: Implement graphics
             case "ldi" -> a = getNext();
             case "loadAtVar" -> a = getNextVarValue();
@@ -481,8 +484,22 @@ public class SLVM {
                     a = falseValue;
             }
             case "toAsciiValue" -> a = String.valueOf((int) getNextVarValue().charAt(0));
-            case "fromAsciiValue" -> a = String.valueOf((char) getIntValue(a));
+            case "fromAsciiValue" -> a = String.valueOf((char) getNextIntVar());
+            case "$sha" -> a = bytesToHex(MessageDigest.getInstance("SHA-256").digest(getNextVarValue().getBytes(StandardCharsets.UTF_8)));
+            case "random" -> a = String.valueOf(Math.random());
             default -> throw new VMException("Unknown instruction '" + instruction + "'", this);
         }
+    }
+
+    private static String bytesToHex(byte[] hash) {
+        StringBuilder hexString = new StringBuilder(2 * hash.length);
+        for (int i = 0; i < hash.length; i++) {
+            String hex = Integer.toHexString(0xff & hash[i]);
+            if(hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
     }
 }

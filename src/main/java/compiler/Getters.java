@@ -8,8 +8,10 @@ import static compiler.Compiler.*;
 
 public class Getters {
     static Namespace getNamespace(String name) {
-        if (!currentProgram.namespaces.containsKey(name))
+        if (currentProgram.namespaces.get(name) == null) {
             errorAndKill("Unknown namespace '" + name + "'");
+            Compiler.printMessages();
+        }
         return currentProgram.namespaces.get(name);
     }
 

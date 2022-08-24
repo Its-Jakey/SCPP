@@ -20,14 +20,12 @@ public namespace strings {
         return _asm_("toAsciiValue", x);
     }
     public func fromAscii(x) {
-        return _asm_("fromAscii", x);
+        return _asm_("fromAsciiValue", x);
     }
     public func substring(string, start, end) {
         var ret = "";
-        var i = start;
-
-        while (i < end)
-            ret ..= charAt(string, i);
+        for (i from start to end)
+            ret = ret .. charAt(string, i);
         return ret;
     }
     public func substring(string, start) {

@@ -13,24 +13,24 @@ public namespace cloud {
         var ret = "";
 
         for (i from 0 to strings::sizeOf(data) by 2) {
-            var word = concat(strings::charAt(data, i), strings::charAt(data, i + 1));
+            var word = strings::charAt(data, i)..strings::charAt(data, i + 1);
 
             if (word == special_word) {
                 i = i + 2;
-                var wordToRepeat = concat(strings::charAt(data, i), strings::charAt(data, i + 1));
+                var wordToRepeat = strings::charAt(data, i)..strings::charAt(data, i + 1);
 
                 if (wordToRepeat == special_word)
-                    ret = concat(ret, special_word);
+                    ret = ret..special_word;
                 if (wordToRepeat != special_word) {
                     i = i + 2;
-                    var repeats = concat(strings::charAt(data, i), strings::charAt(data, i + 1));
+                    var repeats = strings::charAt(data, i)..strings::charAt(data, i + 1);
 
                     for (repeat from 0 to repeats)
-                        ret = concat(ret, wordToRepeat);
+                        ret = ret..wordToRepeat;
                 }
             }
             if (word != special_word)
-                ret = concat(ret, word);
+                ret = ret..word;
         }
 
         return ret;
@@ -41,30 +41,30 @@ public namespace cloud {
         var ret = "";
 
         for (i from 0 to len by 2) {
-            var word = concat(strings::charAt(input, i), strings::charAt(input, i + 1));
+            var word = strings::charAt(input, i)..strings::charAt(input, i + 1);
             var newWord = word;
             var count = 0;
 
             while (i < len && newWord == word) {
                 count = count + 1;
                 i = i + 2;
-                newWord = concat(strings::charAt(input, i), strings::charAt(input, i + 1));
+                newWord = strings::charAt(input, i)..strings::charAt(input, i + 1);
             }
             i = i - 2;
 
             if (count > 2) {
-                ret = concat(ret, special_word);
-                ret = concat(ret, word);
-                ret = concat(ret, count);
+                ret = ret..special_word;
+                ret = ret..word;
+                ret = ret..count;
             }
             if (count < 3) {
                 for (i2 from 0 to count) {
                     if (word == special_word) {
-                        ret = concat(ret, special_word);
-                        ret = concat(ret, special_word);
+                        ret = ret..special_word;
+                        ret = ret..special_word;
                     }
                     if (word != special_word)
-                        ret = concat(ret, word);
+                        ret = ret..word;
                 }
             }
         }
@@ -81,7 +81,7 @@ public namespace cloud {
                 println("Unsupported character ", strings::charAt(value, i), " at index ", i);
                 exit();
             }
-            ret = concat(ret, word);
+            ret = ret..word;
         }
         return ret;
     }
@@ -89,8 +89,8 @@ public namespace cloud {
         var ret = "";
 
         for (i from 0 to strings::sizeOf(value) by 2) {
-            var idx = concat(strings::charAt(value, i), strings::charAt(value, i + 1));
-            ret = concat(ret, strings::charAt(chars, idx));
+            var idx = cstrings::charAt(value, i)..strings::charAt(value, i + 1);
+            ret = ret..strings::charAt(chars, idx);
         }
         return ret;
     }

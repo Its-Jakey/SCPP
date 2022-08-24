@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -203,7 +204,7 @@ public class Ide extends JFrame {
             try {
                 String asm = Compiler.compile(Path.of(getRealPath(ce.path)));
                 new SLVM(asm).run();
-            } catch (IOException ex) {
+            } catch (IOException | NoSuchAlgorithmException ex) {
                 throw new RuntimeException(ex);
             }
         }).start();

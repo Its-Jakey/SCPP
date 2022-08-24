@@ -5,6 +5,8 @@ public namespace map {
     var values = malloc(MAX_SIZE);
     var ptr = 0;
 
+    public var EMPTY_KEY = "EMPTY_KEY_RANDOM_LETTERSJFJFKJLDSKJLDSFKLJSDKLJdfsdfsddsjJ8234758JKJH";
+
     public func put(key, value) {
         keys[ptr] = key;
         values[ptr] = value;
@@ -12,11 +14,28 @@ public namespace map {
 
     public func get(key) {
         for (idx from 0 to ptr) {
-            if (keys[idx] == key) {
+            if (keys[idx] == key)
                 return values[idx];
+        }
+     
+       return -1;
+    }
+
+    public func getAt(idx) {
+        return values[idx];
+    }
+    
+    public func getKeyAt(idx) {
+        return keys[idx];
+    }
+
+    public func remove(key) {
+        for (idx from 0 to ptr) {
+            if (keys[idx] == key) {
+                keys[idx] = EMPTY_KEY;
+                return;
             }
         }
-        return -1;
     }
 
     public func size() {

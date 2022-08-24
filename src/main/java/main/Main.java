@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
 import static ide.Ide.configPath;
@@ -23,7 +24,7 @@ public class Main {
     private static String replaceExtension(String input, String extension) {
         return input.substring(0, input.lastIndexOf('/') + 1) + input.substring(input.lastIndexOf('/') + 1, input.lastIndexOf('.')) + extension;
     }
-    public static void main(String[] args) throws IOException, FontFormatException {
+    public static void main(String[] args) throws IOException, FontFormatException, NoSuchAlgorithmException {
         Options options = new Options();
 
         Option inputOpt = new Option("i", "input", true, "Input file to compile");

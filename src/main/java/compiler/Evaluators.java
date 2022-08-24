@@ -96,9 +96,9 @@ public class Evaluators {
         else if (ctx.INT() != null)
             appendLine("ldi\n" + ctx.INT().getText());
         else if (ctx.HEX() != null)
-            appendLine("ldi\n" + Integer.parseInt(ctx.HEX().getText().substring(2), 16));
+            appendLine("ldi\n" + Long.parseLong(ctx.HEX().getText().substring(2), 16));
         else if (ctx.BIN() != null)
-            appendLine("ldi\n" + Integer.parseInt(ctx.BIN().getText().substring(2), 2));
+            appendLine("ldi\n" + Long.parseLong(ctx.BIN().getText().substring(2), 2));
         else if (ctx.argumentArray() != null)
             assignArgumentArrayToArray(ctx.argumentArray());
         else {
@@ -123,6 +123,17 @@ public class Evaluators {
         InfixToPostfix.evaluatePostfix(InfixToPostfix.infixToPostfix(postfix));
     }
 
+    private static String varToString(SCPPParser.VariableContext ctx) {
+        SCPPParser.VariableContext cur = ctx;
+        StringBuilder ret = new StringBuilder();
+
+        while (cur != null) {
+            ret.append("::").append(cur.ID().getText());
+            cur = cur.variable();
+        }
+        return ret.substring(2);
+    }
+
     static Function evaluateFunctionCall(SCPPParser.FunctionCallContext ctx) {
         List<SCPPParser.ExpressionContext> args = evaluateArgumentArray(ctx.argumentArray());
         SCPPParser.VariableContext variable = ctx.variable();
@@ -139,6 +150,8 @@ public class Evaluators {
         }
         else
             ret = currentProgram.currentNamespace.functions.get(Function.getID(variable.ID().getText(), args));
+        if (ret == null)
+            Compiler.printMessages();
         ret.call(args);
         return ret;
     }
