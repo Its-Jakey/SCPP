@@ -234,7 +234,7 @@ public class SLVM {
 
     private void execute(String instruction) throws NoSuchAlgorithmException {
         switch (instruction) { //TODO: Implement graphics
-            case "ldi" -> a = getNext();
+            case "ldi" -> a = StringEscapeUtils.unescapeJava(getNext());
             case "loadAtVar" -> a = getNextVarValue();
             case "storeAtVar" -> setNextVarValue(a);
             case "jts" -> {

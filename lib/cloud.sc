@@ -89,7 +89,7 @@ public namespace cloud {
         var ret = "";
 
         for (i from 0 to strings::sizeOf(value) by 2) {
-            var idx = cstrings::charAt(value, i)..strings::charAt(value, i + 1);
+            var idx = strings::charAt(value, i)..strings::charAt(value, i + 1);
             ret = ret..strings::charAt(chars, idx);
         }
         return ret;

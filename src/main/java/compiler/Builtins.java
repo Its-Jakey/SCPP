@@ -5,6 +5,9 @@ import com.sun.jdi.Method;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static compiler.Compiler.*;
@@ -19,6 +22,7 @@ public class Builtins extends Namespace {
         add(new malloc());
         add(new exit());
         add(new free());
+        add(new readFromLocalFile());
     }
 
     private void addAllArgs(Function function) {
@@ -138,6 +142,29 @@ public class Builtins extends Namespace {
 
             evaluateExpression(args.get(1));
             appendLine("storeAtVar\nfreeWords\nfree\nfreeAddr\nfreeWords");
+        }
+    }
+
+    private static class readFromLocalFile extends Function {
+        public readFromLocalFile() {
+            super("readFromLocalFile", List.of("path"), true, "__builtins__");
+        }
+
+        @Override
+        public void call(List<SCPPParser.ExpressionContext> args) {
+            super.checkArgumentCount(args, true);
+
+            if (args.get(0).value() == null || args.get(0).value().STRING() == null)
+                error("readFromLocalFile() can only take a string (path) as an argument");
+            else {
+                String tmp = args.get(0).value().STRING().getText();
+                try {
+                    appendLine("ldi\n" + StringEscapeUtils.escapeJava(Files.readString(Path.of(Compiler.topLevelPath + "/" + tmp.substring(1, tmp.length() - 1)))));
+                    appendLine("storeAtVar\n" + super.returnVariable);
+                } catch (IOException e) {
+                    error(e.toString());
+                }
+            }
         }
     }
 }
