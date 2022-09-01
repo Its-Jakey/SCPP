@@ -187,13 +187,6 @@ public class SLVM {
         this.keysPressed = new ArrayList<>();
         this.image = new BufferedImage(480, 360, BufferedImage.TYPE_INT_RGB);
         subroutines = new ArrayList<>();
-        //metadata = new ArrayList<>();
-
-        try {
-            Files.writeString(Path.of("optimiedASM.slvm.txt"), String.join("\n", instructions));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
         Arrays.fill(variables, -1);
 
