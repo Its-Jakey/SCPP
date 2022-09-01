@@ -4,7 +4,10 @@
 namespace copycat {
     public func main() {
         while (1) {
-            graphics::drawString(input::ask(""));
+            var input = input::ask("");
+            println(input);
+
+            graphics::drawString(input);
             graphics::flip();
         }
     }

@@ -1,13 +1,17 @@
 package compiler;
 
 import antlr.SCPPParser;
+import compiler.memory.Function;
+import compiler.memory.Namespace;
+import compiler.memory.Variable;
 
 import java.util.List;
+import java.util.Objects;
 
 import static compiler.Compiler.*;
 
 public class Getters {
-    static Namespace getNamespace(String name) {
+    public static Namespace getNamespace(String name) {
         if (currentProgram.namespaces.get(name) == null) {
             errorAndKill("Unknown namespace '" + name + "'");
             Compiler.printMessages();
@@ -15,29 +19,29 @@ public class Getters {
         return currentProgram.namespaces.get(name);
     }
 
-    static String last = "";
+    public static String last = "";
 
-    static boolean hasConstant(String name) {
+    public static boolean hasConstant(String name) {
         last = currentProgram.fileName + "@" + name;
         return constants.containsKey(currentProgram.fileName + "@" + name);
     }
 
-    static String getConstant(String name) {
+    public static String getConstant(String name) {
         return constants.get(currentProgram.fileName + "@" + name);
     }
 
-    static void addConstant(String name, String value) {
+    public static void addConstant(String name, String value) {
         if (hasConstant(name))
             errorAndKill("Duplicate constant '" + name + "'");
         constants.put(currentProgram.fileName + "@" + name, value);
     }
 
-    static Variable getVariable(Namespace namespace, Function function, String name) {
+    public static Variable getVariable(Namespace namespace, Function function, String name) {
         if (namespace == null)
             errorAndKill("Variable '" + name + "' was requested outside of namespace.");
 
         if (function == null || !(function.arguments.containsKey(name) || function.localVariables.containsKey(name))) {
-            if (namespace.variables.containsKey(name) && (namespace.equals(currentProgram.currentNamespace) || namespace.variables.get(name).isPublic()))
+            if (Objects.requireNonNull(namespace).variables.containsKey(name) && (namespace.equals(currentProgram.currentNamespace) || namespace.variables.get(name).isPublic()))
                 return namespace.variables.get(name);
             if (!hasConstant(name))
                 errorAndKill("Unknown variable '" + name + "'");
@@ -50,12 +54,12 @@ public class Getters {
         return new Variable(function.localVariables.get(name), false);
     }
 
-    static Function getFunction(Namespace namespace, String name, List<SCPPParser.ExpressionContext> args) {
+    public static Function getFunction(Namespace namespace, String name, List<SCPPParser.ExpressionContext> args) {
         if (namespace == null)
             errorAndKill("Function '" + name + "' was requested outside of namespace");
         if (builtins.functions.containsKey(Function.getID(name, args)))
             return builtins.functions.get(Function.getID(name, args));
-        if (!namespace.functions.containsKey(Function.getID(name, args)) || (!namespace.equals(currentProgram.currentNamespace) && !namespace.functions.get(Function.getID(name, args)).isPublic))
+        if (!Objects.requireNonNull(namespace).functions.containsKey(Function.getID(name, args)) || (!namespace.equals(currentProgram.currentNamespace) && !namespace.functions.get(Function.getID(name, args)).isPublic))
             errorAndKill("Unknown function '" + name + "'");
         return namespace.functions.get(Function.getID(name, args));
     }

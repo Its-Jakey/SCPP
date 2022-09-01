@@ -29,9 +29,9 @@ public class Ide extends JFrame {
     JTextArea console;
     private final PrintStream outputStream;
     private FileTree fileHierarchy;
-    private Config config;
+    private final Config config;
     private Config projectConfig;
-    String projectDir;
+    final String projectDir;
     Font font;
 
     public static Config getDefaultConfig() {
@@ -75,7 +75,7 @@ public class Ide extends JFrame {
         ((Menu) super.getJMenuBar()).update();
     }
 
-    KeyListener functionListener = new KeyListener() {
+    final KeyListener functionListener = new KeyListener() {
         @Override
         public void keyTyped(KeyEvent e) {
 
@@ -202,8 +202,7 @@ public class Ide extends JFrame {
 
         new Thread(() -> {
             try {
-                String asm = Compiler.compile(Path.of(getRealPath(ce.path)));
-                new SLVM(asm).run();
+                new SLVM(Compiler.compile(Path.of(getRealPath(ce.path))).split("\n")).run();
             } catch (IOException | NoSuchAlgorithmException ex) {
                 throw new RuntimeException(ex);
             }

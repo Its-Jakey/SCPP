@@ -2,22 +2,17 @@ package ide.project;
 
 import ide.Config;
 import ide.Ide;
-import org.apache.commons.lang3.ArrayUtils;
 
 import javax.swing.*;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.stream.Collector;
+import java.util.Objects;
 
 public class ProjectSelector extends javax.swing.JFrame {
-    private javax.swing.JButton cancelBtn;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton newBtn;
-    private javax.swing.JButton openBtn;
     private javax.swing.JList<String> projectList;
 
     private String projectDir;
@@ -32,19 +27,19 @@ public class ProjectSelector extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jButton1 = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        JButton jButton1 = new JButton();
+        JScrollPane jScrollPane1 = new JScrollPane();
         projectList = new javax.swing.JList<>();
-        newBtn = new javax.swing.JButton();
-        openBtn = new javax.swing.JButton();
-        cancelBtn = new javax.swing.JButton();
+        JButton newBtn = new JButton();
+        JButton openBtn = new JButton();
+        JButton cancelBtn = new JButton();
 
         jButton1.setText("jButton1");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         projectList.setModel(new javax.swing.AbstractListModel<>() {
-            String[] strings = Arrays.stream(new File(config.getOption("projectRoot")[0]).listFiles()).map(File::getName).toArray(String[]::new);
+            final String[] strings = Arrays.stream(Objects.requireNonNull(new File(config.getOption("projectRoot")[0]).listFiles())).map(File::getName).toArray(String[]::new);
 
             public int getSize() {
                 return strings.length;
@@ -103,7 +98,7 @@ public class ProjectSelector extends javax.swing.JFrame {
         }
         String projectRoot = config.getOption("projectRoot")[0];
 
-        if (new File(projectRoot).listFiles() != null && Arrays.stream(new File(projectRoot).listFiles()).anyMatch(f -> f.getName().equals(name))) {
+        if (new File(projectRoot).listFiles() != null && Arrays.stream(Objects.requireNonNull(new File(projectRoot).listFiles())).anyMatch(f -> f.getName().equals(name))) {
             JOptionPane.showMessageDialog(null, "Project already exists");
             return;
         }
@@ -115,14 +110,7 @@ public class ProjectSelector extends javax.swing.JFrame {
         projectConfig.editOption("tabs", projectDir + "/main.sc");
         projectConfig.writeToFile(Path.of(projectDir + "config.txt"));
         try {
-            Files.writeString(Path.of(projectDir + "main.sc"),
-                    Arrays.stream(ArrayUtils.toObject(getClass().getResourceAsStream("/demo.sc")
-                            .readAllBytes())).map(b -> (char) (b + 0))
-                            .collect(Collector.of(
-                                    StringBuilder::new,
-                                    StringBuilder::append,
-                                    StringBuilder::append,
-                                    StringBuilder::toString)));
+            Files.writeString(Path.of(projectDir + "main.sc"), new DataInputStream(Objects.requireNonNull(getClass().getResourceAsStream("/demo.sc"))).readUTF());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

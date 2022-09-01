@@ -6,12 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 import static ide.Ide.configPath;
 
 public class Config {
-    private LinkedHashMap<String, String[]> config;
+    private final LinkedHashMap<String, String[]> config;
 
     public static Config fromFile(String path) throws IOException {
         String text = Files.readString(Path.of(path));

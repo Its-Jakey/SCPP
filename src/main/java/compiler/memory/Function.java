@@ -1,23 +1,25 @@
-package compiler;
+package compiler.memory;
 
 import antlr.SCPPParser;
+import compiler.Compiler;
+import compiler.Evaluators;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 
 public class Function {
-    final LinkedHashMap<String, String> arguments;
-    final LinkedHashMap<String, String> localVariables;
-    final boolean isPublic;
+    public final LinkedHashMap<String, String> arguments;
+    public final LinkedHashMap<String, String> localVariables;
+    public final boolean isPublic;
 
-    final String returnVariable;
-    final String name;
+    public final String returnVariable;
+    public final String name;
     private final String variablePrefix;
-    SCPPParser.FunctionDeclarationContext context = null;
-    Program program = null;
-    boolean inline = false;
-    int level = 0;
-    final List<String> rawArgs;
+    public SCPPParser.FunctionDeclarationContext context = null;
+    public Program program = null;
+    public boolean inline = false;
+    public int level = 0;
+    public final List<String> rawArgs;
 
     public Function(String name, List<String> arguments, boolean isPublic, String variablePrefix) {
         this.arguments = new LinkedHashMap<>();

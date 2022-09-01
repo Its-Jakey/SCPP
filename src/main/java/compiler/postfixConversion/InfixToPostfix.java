@@ -58,16 +58,6 @@ public class InfixToPostfix {
     public static void evaluatePostfix(List<ValueOrOperatorOrID> postfix) {
 
         Stack<ValueOrOperatorOrID> stack = new Stack<>();
-        /*
-        StringBuilder visualPostfix = new StringBuilder();
-
-        for (ValueOrOperatorOrID post : postfix) {
-            if (post.operator() != null)
-                visualPostfix.append(" ").append(post.operator()).append(" ");
-            else
-                visualPostfix.append(" ").append(post.value().getText()).append(" ");
-        }
-        */
 
         for (ValueOrOperatorOrID x : postfix) {
             if (x.value() != null || x.getId() != null) {

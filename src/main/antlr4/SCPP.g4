@@ -81,7 +81,7 @@ includeDirective
 
 codeBlock
 : '{' (statement | COMMENT)*? '}'
-| statement;
+| COMMENT? statement;
 
 argumentArray
 : expression (',' argumentArray)?;
@@ -101,14 +101,14 @@ expression
 | value;
 
 value
-: (variable arrayIndex?)
+: COMMENT? ((variable arrayIndex?)
 | (functionCall arrayIndex?)
 | conditionalValue
 | STRING
 | INT
 | HEX
 | BIN
-| '{' argumentArray '}';
+| '{' argumentArray '}') COMMENT?;
 
 conditionalValue
 : '?' expression ':' expression '!' expression;

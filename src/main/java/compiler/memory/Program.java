@@ -1,13 +1,13 @@
-package compiler;
+package compiler.memory;
 
 import java.util.LinkedHashMap;
 
 public class Program {
-    LinkedHashMap<String, Namespace> namespaces;
-    Namespace currentNamespace = null;
-    Function currentFunction = null;
-    String fileName;
-    int level = 0;
+    public LinkedHashMap<String, Namespace> namespaces;
+    public Namespace currentNamespace = null;
+    public Function currentFunction = null;
+    public String fileName;
+    public int level = 0;
 
     public Program(String fileName) {
         this.fileName = fileName;

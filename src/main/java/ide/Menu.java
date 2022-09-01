@@ -1,15 +1,8 @@
 package ide;
 
-import compiler.Compiler;
-import compiler.Console;
-import slvm.SLVM;
-
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.file.Path;
 
 public class Menu extends JMenuBar {
     private final JMenuItem runBtn;
@@ -58,9 +51,7 @@ public class Menu extends JMenuBar {
         mnFile.add(saveAsBtn);
 
         JMenuItem openBtn = new JMenuItem("Open");
-        openBtn.addActionListener(e -> {
-            i.openFile();
-        });
+        openBtn.addActionListener(e -> i.openFile());
         mnFile.add(openBtn);
 
         JMenuItem newBtn = new JMenuItem("New");
@@ -75,14 +66,9 @@ public class Menu extends JMenuBar {
         add(nmRun);
 
 
-        runBtn.addActionListener(e -> {
-            i.runCode(i.getCurrentTab());
-        });
+        runBtn.addActionListener(e -> i.runCode(i.getCurrentTab()));
         runBtn.setEnabled(false);
         nmRun.add(runBtn);
 
-        //JMenuItem fontBtn = new JMenuItem("Select Font");
-        //fontBtn.addActionListener(e -> i.askFont());
-        //mnNewMenu.add(fontBtn);
     }
 }

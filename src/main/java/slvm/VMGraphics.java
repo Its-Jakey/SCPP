@@ -1,8 +1,10 @@
 package slvm;
 
+import compiler.Compiler;
+
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 public class VMGraphics {
     private int gp;
@@ -12,7 +14,7 @@ public class VMGraphics {
 
     static {
         try {
-            font = Font.createFont(Font.TRUETYPE_FONT, compiler.Compiler.class.getResourceAsStream("/font.ttf")).deriveFont(Font.PLAIN, 8);
+            font = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(Compiler.class.getResourceAsStream("/font.ttf"))).deriveFont(Font.PLAIN, 8);
         } catch (FontFormatException | IOException e) {
             throw new RuntimeException(e);
         }

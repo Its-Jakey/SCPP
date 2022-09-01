@@ -3,8 +3,8 @@ package compiler;
 import antlr.SCPPLexer;
 import antlr.SCPPListener;
 import antlr.SCPPParser;
+import compiler.memory.*;
 import compiler.optimizer.Assembler;
-import compiler.optimizer.Optimizer;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -12,10 +12,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -31,9 +29,7 @@ public class Compiler implements SCPPListener {
     private static int tempN = 0;
     static final Builtins builtins = new Builtins();
     static LinkedHashMap<String, String> constants;
-    public static boolean showLogs = false;
-    public static boolean optimize = false;
-    static Program currentProgram;
+    public static Program currentProgram;
     static LinkedHashMap<String, Program> compiledLibraries;
     static Stack<Switch> switches;
     public static Path topLevelPath;
@@ -54,21 +50,12 @@ public class Compiler implements SCPPListener {
         Thread.currentThread().stop();
     }
 
-    static void log(Object msg) {
-        if (showLogs)
-            messages.add("Log:\t" + msg);
-    }
-
     static void message(String msg) {
         messages.add("Message: " + msg);
     }
 
     public static void warn(String msg) {
         messages.add(getPrefixMessage() + " warning: " + msg);
-    }
-
-    private String getVariableName(SCPPParser.VariableContext ctx) {
-        return "";
     }
 
     public static void printMessages() {
@@ -78,7 +65,7 @@ public class Compiler implements SCPPListener {
     private Program getLibrary(String lib) {
         if (!compiledLibraries.containsKey(lib)) {
             try {
-                compiledLibraries.put(lib, compileProgramFromString(CharStreams.fromReader(new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/" + lib + ".sc")))), 0, lib + ".sc"));
+                compiledLibraries.put(lib, compileProgramFromString(CharStreams.fromReader(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/" + lib + ".sc"))))), 0, lib + ".sc"));
             } catch (IOException e) {
                 errorAndKill(e.toString());
             }
@@ -118,17 +105,14 @@ public class Compiler implements SCPPListener {
             Console.err.println("Build failed in " + time / 1000d + " seconds");
         } else
             Console.out.println("Build succeeded in " + time / 1000d + " seconds");
-        if (optimize)
-            return Assembler.assemble(Optimizer.optimize(getRawOutput()));
-        else
-            return getOutput();
+        return getOutput();
     }
 
     private static void compileLowerLevel(Path file) {
         Program programBackup = currentProgram.clone();
         currentProgram = compileProgram(file, programBackup.level - 1);
 
-        for (Map.Entry<String, Namespace> newSpace : currentProgram.namespaces.entrySet()) {
+        for (Map.Entry<String, Namespace> newSpace : Objects.requireNonNull(currentProgram).namespaces.entrySet()) {
             if (!programBackup.namespaces.containsKey(newSpace.getKey()) && newSpace.getValue().isPubic)
                 programBackup.namespaces.put(newSpace.getKey(), newSpace.getValue());
         }
@@ -159,7 +143,7 @@ public class Compiler implements SCPPListener {
         return compiledProgram;
     }
 
-    static void compileContext(ParserRuleContext ctx) {
+    public static void compileContext(ParserRuleContext ctx) {
         ParseTreeWalker walker = new ParseTreeWalker();
         walker.walk(new Compiler(), ctx);
     }
@@ -264,7 +248,7 @@ public class Compiler implements SCPPListener {
         }
         for (Map.Entry<String, Variable> variable : source.variables.entrySet()) {
             if (variable.getValue().isPublic())
-                definition.variables.put(variable.getKey(), new Variable(variable.getValue(), false));
+                definition.variables.put(variable.getKey(), new Variable(variable.getValue().id(), false));
         }
     }
 
@@ -301,8 +285,6 @@ public class Compiler implements SCPPListener {
 
     @Override
     public void enterNamespaceDeclaration(SCPPParser.NamespaceDeclarationContext ctx) {
-        log("Entered namespace '" + ctx.ID(0).getText() + "'");
-
         if (currentProgram.currentNamespace != null)
             errorAndKill("Cannot declare namespace from inside of namespace");
         if (currentProgram.namespaces.containsKey(ctx.ID(0).getText()))
@@ -322,8 +304,8 @@ public class Compiler implements SCPPListener {
                     //namespace.ID().set(0, newId); //Not changing ID
                     namespace.context.children.set(0, newId);
 
-                    String fileNameBackup = currentProgram.fileName.substring(0);
-                    currentProgram.fileName = namespace.fileName.substring(0);
+                    String fileNameBackup = currentProgram.fileName;
+                    currentProgram.fileName = namespace.fileName;
                     compileContext(namespace.context);
 
                     currentProgram.fileName = fileNameBackup;
@@ -353,7 +335,6 @@ public class Compiler implements SCPPListener {
             currentProgram.currentNamespace = null;
             appendLine("ret");
         }
-        log("Exited namespace '" + ctx.ID(0).getText() + "'");
     }
 
     @Override
@@ -387,7 +368,7 @@ public class Compiler implements SCPPListener {
         currentProgram.currentFunction = null;
     }
 
-    private final Stack<Integer> ifCounts = new Stack<>();
+    private static final Stack<Integer> ifCounts = new Stack<>();
     private static int ifCount = 0;
 
     @Override
@@ -682,7 +663,6 @@ public class Compiler implements SCPPListener {
     public void exitDefineDirective(SCPPParser.DefineDirectiveContext ctx) {
         addConstant(ctx.ID().getText(), ctx.INT() != null ? ctx.INT().getText() : (ctx.HEX() != null ? String.valueOf(Integer.parseInt(ctx.HEX().getText().substring(2), 16)) : String.valueOf(Integer.parseInt(ctx.BIN().getText().substring(2), 2))));
         //addConstant(ctx.ID().getText(), ctx.INT().getText());
-        log("Constant '" + ctx.ID().getText() + "' defined");
     }
 
     @Override
@@ -698,8 +678,6 @@ public class Compiler implements SCPPListener {
             String lib = ctx.LIBRARY().getText().substring(1, ctx.LIBRARY().getText().length() - 1);
             program = getLibrary(lib);
             //Console.out.println(program.fileName);
-
-            log("Included library <" + lib + ">");
         } else {
             String tmp = ctx.STRING().getText();
             String path = topLevelPath + "/" + tmp.substring(1, tmp.length() - 1);

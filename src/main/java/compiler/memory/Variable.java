@@ -1,33 +1,12 @@
-package compiler;
+package compiler.memory;
 
-import antlr.SCPPParser;
-
-import java.util.LinkedHashMap;
 import java.util.Objects;
 
-public class Namespace {
-    LinkedHashMap<String, Variable> variables;
-    LinkedHashMap<String, Function> functions;
-    boolean isPubic;
-    String name;
-    SCPPParser.NamespaceDeclarationContext context = null;
-    String fileName = "";
-    int level = 0;
-
-    public Namespace(String name, boolean isPublic) {
-        this.name = name;
-        this.isPubic = isPublic;
-
-        variables = new LinkedHashMap<>();
-        functions = new LinkedHashMap<>();
-    }
-}
-
-final class Variable {
+public final class Variable {
     private final String id;
     private final boolean isPublic;
 
-    Variable(String id, boolean isPublic) {
+    public Variable(String id, boolean isPublic) {
         this.id = id;
         this.isPublic = isPublic;
     }

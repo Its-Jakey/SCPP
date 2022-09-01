@@ -1,19 +1,16 @@
 package ide;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Objects;
 import java.util.Vector;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -26,7 +23,7 @@ import javax.swing.tree.TreePath;
  */
 public class FileTree extends JPanel {
     private final File dir;
-    private JTree tree;
+    private final JTree tree;
     private final JScrollPane scrollPane;
     private TreeSelectionListener listener;
 
@@ -42,7 +39,7 @@ public class FileTree extends JPanel {
             public void mousePressed(MouseEvent e) {
                 int selRow = tree.getRowForLocation(e.getX(), e.getY());
                 TreePath selPath = tree.getPathForLocation(e.getX(), e.getY());
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode) selPath.getLastPathComponent();
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) Objects.requireNonNull(selPath).getLastPathComponent();
 
                 if (SwingUtilities.isRightMouseButton(e)){
                     tree.setSelectionPath(selPath);
@@ -59,15 +56,6 @@ public class FileTree extends JPanel {
             }
         };
         tree.addMouseListener(ml);
-
-        /*
-        listener = e -> {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) e
-                    .getPath().getLastPathComponent();
-            System.out.println("You selected " + node);
-        };
-        tree.addTreeSelectionListener(listener);
-        */
 
         // Lastly, put the JTree into a JScrollPane.
         scrollPane = new JScrollPane();

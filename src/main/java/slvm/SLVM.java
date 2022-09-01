@@ -1,6 +1,7 @@
 package slvm;
 
 import compiler.Console;
+import compiler.optimizer.Optimizer;
 import org.apache.commons.text.StringEscapeUtils;
 
 import javax.swing.*;
@@ -10,28 +11,30 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class SLVM {
     private final String[] instructions;
     private final String[] ram = new String[0xFFFFFFF];
+    private final int[] variables = new int[0xFFFFF];
     private final boolean[] usedAddresses = new boolean[ram.length];
     int pc;
     private String a;
     private boolean isMouseDown;
     private final List<Integer> keysPressed;
-    private LinkedHashMap<String, Integer> variables;
     private final Stack<Integer> stack;
     private final Stack<String> varStack;
-    private boolean running;
+    private final boolean running;
     private final List<String> buffer;
     private final VMGraphics graphics;
-    private final JPanel panel;
+    private JPanel panel;
     private long runStart;
     private final BufferedImage image;
     String $fileName = null, $line = "0";
@@ -55,12 +58,24 @@ public class SLVM {
     private double getNextInt() {
         return getIntValue(getNext());
     }
-    private int getVar(String varName) {
-        if (!variables.containsKey(varName)) {
-            variables.put(varName, allocateMemory(1));
-            ram[variables.get(varName)] = "0";
+    /* private int getVar(String varStr) {
+        int var = Integer.parseInt(varStr);
+
+        if (variables[var] == -1) {
+            variables[var] = allocateMemory(1);
+            ram[variables[var]] = "0";
         }
-        return variables.get(varName);
+
+        return variables[var];
+    } */
+
+    private final HashMap<String, Integer> tmpVars = new HashMap<>();
+    private int getVar(String var) {
+        if (!tmpVars.containsKey(var)) {
+            tmpVars.put(var, allocateMemory(1));
+            ram[tmpVars.get(var)] = "0";
+        }
+        return tmpVars.get(var);
     }
     private List<Cluster> createClusters(int maxSize) {
         List<Cluster> ret = new ArrayList<>();
@@ -144,18 +159,6 @@ public class SLVM {
         return a.equals(b);
     }
 
-    void logVars(String path) {
-        try {
-            FileWriter writer = new FileWriter(path);
-            for (String var : variables.keySet()) {
-                writer.write(var + " = " + ram[variables.get(var)] + "\n");
-            }
-            writer.close();
-        } catch (Exception e) {
-            throw new VMException(e.getMessage(), this);
-        }
-    }
-
     private int mapKey(String key) {
         return switch (key) {
             case "left arrow" -> KeyEvent.VK_LEFT;
@@ -170,13 +173,12 @@ public class SLVM {
         };
     }
 
-    private final JFrame frame;
+    private JFrame frame;
     static List<Integer> subroutines;
 
 
-    public SLVM(String program) {
-        this.instructions = program.split("\n");
-        this.variables = new LinkedHashMap<>();
+    public SLVM(String[] program) {
+        this.instructions = Optimizer.optimize(program);
         this.running = true;
         this.buffer = new ArrayList<>();
         this.stack = new Stack<>();
@@ -187,39 +189,50 @@ public class SLVM {
         subroutines = new ArrayList<>();
         //metadata = new ArrayList<>();
 
-        frame = new JFrame();
-        frame.setSize(480, 360);
+        try {
+            Files.writeString(Path.of("optimiedASM.slvm.txt"), String.join("\n", instructions));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        panel = new JPanel() {
-            @Override
-            public void paintComponent(Graphics g) {
-                g.drawImage(image, 0, 0, frame.getWidth(), frame.getHeight(), this);
-            }
-        };
-        frame.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (!keysPressed.contains(e.getKeyCode()))
-                    keysPressed.add(e.getKeyCode());
-            }
+        Arrays.fill(variables, -1);
 
-            @Override
-            public void keyReleased(KeyEvent e) {
-                keysPressed.remove((Object) e.getKeyCode());
-            }
+        SwingUtilities.invokeLater(() -> {
+            frame = new JFrame();
+            frame.setSize(480, 360);
+
+            panel = new JPanel() {
+                @Override
+                public void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    g.drawImage(image, 0, 0, frame.getWidth(), frame.getHeight(), this);
+                }
+            };
+            frame.addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (!keysPressed.contains(e.getKeyCode()))
+                        keysPressed.add(e.getKeyCode());
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    keysPressed.remove((Object) e.getKeyCode());
+                }
+            });
+            frame.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    isMouseDown = true;
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    isMouseDown = false;
+                }
+            });
+            frame.add(panel);
         });
-        frame.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                isMouseDown = true;
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                isMouseDown = false;
-            }
-        });
-        frame.add(panel);
 
         Arrays.fill(ram, "0");
     }
@@ -293,7 +306,7 @@ public class SLVM {
                 buffer.addAll(List.of("setColor", color));
             }
             case "clg" -> buffer.clear();
-            case "done" -> running = false;
+            case "done" -> Thread.currentThread().stop();
             case "malloc" -> a = String.valueOf(allocateMemory((int) getNextIntVar()));
             case "round" -> {
                 double toRound = getIntValue(getNextVarValue());
@@ -371,7 +384,6 @@ public class SLVM {
                 int addr = getVar(getNext());
                 ram[addr] = getInt(getIntValue(ram[addr]) - 1);
             }
-            case "arraySize" -> {}
             case "graphicsFlip" -> {
                 frame.setVisible(true);
                 graphics.process(buffer, image.createGraphics(), this);
@@ -382,9 +394,8 @@ public class SLVM {
                 Console.out.print(getNextVarValue());
                 a = new Scanner(System.in).nextLine();
             }
-            case "setCloudVar" -> {}
-            case "getCloudVar" -> {}
-            case "indexOfChar" -> {}
+            case "setCloudVar", "getCloudVar" -> {}
+            case "indexOfChar" -> a = String.valueOf(getNextVarValue().indexOf(getNextVarValue().charAt(0)));
             case "goto" -> buffer.addAll(List.of("goto", getNextVarValue(), getNextVarValue()));
             case "imalloc" -> {
                 int words = (int) getNextInt();
@@ -404,10 +415,8 @@ public class SLVM {
             case "nop" -> {}
             case "getVarAddress" -> getVar(getNext());
             case "setVarAddress" -> {
-                String varName = getNext();
-
-                if (variables.containsKey(varName))
-                    variables.replace(varName, (int) getNextIntVar());
+                int var = Integer.parseInt(getNext());
+                variables[var] = (int) getNextIntVar();
             }
             case "copyVar" -> {
                 String source = getNext();
@@ -493,9 +502,9 @@ public class SLVM {
 
     private static String bytesToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder(2 * hash.length);
-        for (int i = 0; i < hash.length; i++) {
-            String hex = Integer.toHexString(0xff & hash[i]);
-            if(hex.length() == 1) {
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
                 hexString.append('0');
             }
             hexString.append(hex);

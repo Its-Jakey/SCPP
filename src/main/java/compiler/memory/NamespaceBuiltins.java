@@ -1,6 +1,8 @@
-package compiler;
+package compiler.memory;
 
 import antlr.SCPPParser;
+import compiler.Compiler;
+import compiler.Evaluators;
 
 import java.util.List;
 
@@ -18,7 +20,7 @@ public class NamespaceBuiltins {
     }
 
     private static class pack extends Function {
-        private Namespace namespace;
+        private final Namespace namespace;
 
         public pack(Namespace namespace) {
             super("pack", List.of(), true, namespace.name + "_");
@@ -34,8 +36,8 @@ public class NamespaceBuiltins {
             Compiler.appendLine("storeAtVar\n" + super.returnVariable);
             List<Variable> variables = namespace.variables.values().stream().toList();
 
-            for (int i = 0; i < variables.size(); i++) {
-                Compiler.appendLine("loadAtVar\n" + variables.get(i).id());
+            for (Variable variable : variables) {
+                Compiler.appendLine("loadAtVar\n" + variable.id());
                 Compiler.appendLine("setValueAtPointer\npackAddress");
                 Compiler.appendLine("inc\npackAddress");
             }
@@ -43,7 +45,7 @@ public class NamespaceBuiltins {
     }
 
     private static class unpack extends Function {
-        private Namespace namespace;
+        private final Namespace namespace;
 
         public unpack(Namespace namespace) {
             super("unpack", List.of("data"), true, namespace.name + "_");
@@ -58,9 +60,9 @@ public class NamespaceBuiltins {
             Evaluators.evaluateExpression(args.get(0));
             Compiler.appendLine("storeAtVar\nunpackAddress");
 
-            for (int i = 0; i < variables.size(); i++) {
+            for (Variable variable : variables) {
                 Compiler.appendLine("getValueAtPointer\nunpackAddress");
-                Compiler.appendLine("storeAtVar\n" + variables.get(i).id());
+                Compiler.appendLine("storeAtVar\n" + variable.id());
                 Compiler.appendLine("inc\nunpackAddress");
             }
         }

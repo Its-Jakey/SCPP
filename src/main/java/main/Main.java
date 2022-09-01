@@ -1,14 +1,10 @@
 package main;
 
 import compiler.Compiler;
-import compiler.Console;
-import ide.Config;
 import ide.Ide;
-import ide.project.ProjectSelector;
 import org.apache.commons.cli.*;
 import slvm.SLVM;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -17,14 +13,11 @@ import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
-import static ide.Ide.configPath;
-import static ide.Ide.getDefaultConfig;
-
 public class Main {
     private static String replaceExtension(String input, String extension) {
         return input.substring(0, input.lastIndexOf('/') + 1) + input.substring(input.lastIndexOf('/') + 1, input.lastIndexOf('.')) + extension;
     }
-    public static void main(String[] args) throws IOException, FontFormatException, NoSuchAlgorithmException {
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
         Options options = new Options();
 
         Option inputOpt = new Option("i", "input", true, "Input file to compile");
@@ -75,8 +68,9 @@ public class Main {
                 if (cmd.hasOption("d"))
                     Files.writeString(Path.of(cmd.getOptionValue("d")), Compiler.getRawOutput());
                 Files.writeString(Path.of(output), asm);
+
                 if (cmd.hasOption("r")) {
-                    new SLVM(asm).run();
+                    new SLVM(asm.split("\n")).run();
                     System.exit(0);
                 }
             }

@@ -1,7 +1,8 @@
-package compiler;
+package compiler.memory;
 
 public class Switch {
-    public String switchValue, exitPoint;
+    public final String switchValue;
+    public final String exitPoint;
 
     public Switch(String switchValue, String exitPoint) {
         this.switchValue = switchValue;

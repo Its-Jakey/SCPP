@@ -1,20 +1,19 @@
 package compiler;
 
 import antlr.SCPPParser;
+import compiler.memory.Function;
 import compiler.postfixConversion.InfixToPostfix;
 import compiler.postfixConversion.ValueOrOperatorOrID;
-import org.apache.commons.text.StringEscapeUtils;
 
-import java.awt.image.BufferedImage;
-import java.beans.Expression;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static compiler.Compiler.*;
 import static compiler.Getters.*;
 
 public class Evaluators {
-    static List<SCPPParser.ExpressionContext> evaluateArgumentArray(SCPPParser.ArgumentArrayContext ctx) {
+    public static List<SCPPParser.ExpressionContext> evaluateArgumentArray(SCPPParser.ArgumentArrayContext ctx) {
         List<SCPPParser.ExpressionContext> ret = new ArrayList<>();
         SCPPParser.ArgumentArrayContext cur = ctx;
 
@@ -30,13 +29,13 @@ public class Evaluators {
         endTemp();
     }
 
-    static void setValueAtArrayIndex(String base, SCPPParser.ArrayIndexContext arrayIndex, SCPPParser.ExpressionContext value) {
+    public static void setValueAtArrayIndex(String base, SCPPParser.ArrayIndexContext arrayIndex, SCPPParser.ExpressionContext value) {
         getValueAtIndex(base, arrayIndex, createTemp());
         evaluateExpression(value);
         appendLine("setValueAtPointer\n" + endTemp());
     }
 
-    static void getValueAtIndex(String array, SCPPParser.ArrayIndexContext index, String indexName) {
+    public static void getValueAtIndex(String array, SCPPParser.ArrayIndexContext index, String indexName) {
         if (index == null) return;
 
         evaluateExpression(index.expression());
@@ -50,7 +49,7 @@ public class Evaluators {
     }
 
 
-    static void assignArgumentArrayToArray(SCPPParser.ArgumentArrayContext ctx) {
+    public static void assignArgumentArrayToArray(SCPPParser.ArgumentArrayContext ctx) {
         List<SCPPParser.ExpressionContext> args = evaluateArgumentArray(ctx);
         String address = createTemp();
 
@@ -113,7 +112,7 @@ public class Evaluators {
         }
     }
 
-    static void evaluateExpression(SCPPParser.ExpressionContext ctx) {
+    public static void evaluateExpression(SCPPParser.ExpressionContext ctx) {
         if (ctx.value() != null) {
             evaluateValue(ctx.value());
             return;
@@ -134,7 +133,7 @@ public class Evaluators {
         return ret.substring(2);
     }
 
-    static Function evaluateFunctionCall(SCPPParser.FunctionCallContext ctx) {
+    public static Function evaluateFunctionCall(SCPPParser.FunctionCallContext ctx) {
         List<SCPPParser.ExpressionContext> args = evaluateArgumentArray(ctx.argumentArray());
         SCPPParser.VariableContext variable = ctx.variable();
         Function ret = null;
@@ -152,11 +151,11 @@ public class Evaluators {
             ret = currentProgram.currentNamespace.functions.get(Function.getID(variable.ID().getText(), args));
         if (ret == null)
             Compiler.printMessages();
-        ret.call(args);
+        Objects.requireNonNull(ret).call(args);
         return ret;
     }
 
-    static List<String> evaluateFunctionArgumentArray(SCPPParser.FunctionArgumentArrayContext ctx) {
+    public static List<String> evaluateFunctionArgumentArray(SCPPParser.FunctionArgumentArrayContext ctx) {
         SCPPParser.FunctionArgumentArrayContext cur = ctx;
         List<String> ret = new ArrayList<>();
 

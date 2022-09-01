@@ -1,5 +1,5 @@
 jmp
-252
+290
 jmp
 17
 loadAtVar
@@ -164,8 +164,36 @@ asmExpression2
 storeAtVar
 __builtins___asm__return
 ret
+ldi
+up arrow
+storeAtVar
+input_KEY_UP
+ldi
+down arrow
+storeAtVar
+input_KEY_DOWN
+ldi
+left arrow
+storeAtVar
+input_KEY_LEFT
+ldi
+right arrow
+storeAtVar
+input_KEY_RIGHT
+ldi
+space
+storeAtVar
+input_KEY_SPACE
+ldi
+enter
+storeAtVar
+input_KEY_ENTER
+ldi
+escape
+storeAtVar
+input_KEY_ESCAPE
 jmp
-176
+204
 mouseX
 storeAtVar
 __builtins___asm__return
@@ -175,7 +203,7 @@ storeAtVar
 input_mouseX_return
 ret
 jmp
-186
+214
 mouseY
 storeAtVar
 __builtins___asm__return
@@ -185,7 +213,7 @@ storeAtVar
 input_mouseY_return
 ret
 jmp
-196
+224
 mouseDown
 storeAtVar
 __builtins___asm__return
@@ -195,7 +223,7 @@ storeAtVar
 input_isMouseDown_return
 ret
 jmp
-211
+239
 loadAtVar
 input_isKeyPressed_key
 storeAtVar
@@ -210,7 +238,7 @@ storeAtVar
 input_isKeyPressed_return
 ret
 jmp
-226
+254
 loadAtVar
 input_ask_message
 storeAtVar
@@ -226,19 +254,29 @@ input_ask_return
 ret
 ret
 jmp
-251
+289
 ldi
 1
 jf
-251
+289
 ldi
 
 storeAtVar
 input_ask_message
 jts
-213
+241
 loadAtVar
 input_ask_return
+storeAtVar
+copycat_main_input
+loadAtVar
+copycat_main_input
+print
+ldi
+
+println
+loadAtVar
+copycat_main_input
 storeAtVar
 graphics_drawString_string
 jts
@@ -248,14 +286,14 @@ jts
 ldi
 1
 jt
-233
+261
 ret
 jts
 2
 jts
 166
 jts
-227
+255
 jts
-229
+257
 done

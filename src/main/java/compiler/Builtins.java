@@ -1,8 +1,8 @@
 package compiler;
 
 import antlr.SCPPParser;
-import com.sun.jdi.Method;
-import org.apache.commons.lang3.StringUtils;
+import compiler.memory.Function;
+import compiler.memory.Namespace;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
