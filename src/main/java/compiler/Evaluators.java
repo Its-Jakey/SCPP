@@ -112,6 +112,51 @@ public class Evaluators {
         }
     }
 
+    public static void pushValueToStack(SCPPParser.ValueContext ctx) {
+        if (ctx.variable() != null || ctx.functionCall() != null) {
+            String varName = null;
+
+            if (ctx.variable() != null) {
+                SCPPParser.VariableContext variable = ctx.variable();
+
+                if (variable.variable() != null)
+                    varName = getVariable(getNamespace(variable.ID().getText()), null, variable.variable().ID().getText()).id();
+                else
+                    varName = getVariable(currentProgram.currentNamespace, currentProgram.currentFunction, variable.ID().getText()).id();
+            }
+            else if (ctx.functionCall() != null)
+                varName = evaluateFunctionCall(ctx.functionCall()).returnVariable;
+            if (ctx.arrayIndex() != null) {
+                loadValueAtArrayIndex(varName, ctx.arrayIndex());
+                appendLine("stackPushA");
+            } else
+                appendLine("stackPush\n" + varName);
+            return;
+        }
+        if (ctx.STRING() != null)
+            appendLine("stackPushI\n" + ctx.STRING().getText().substring(1, ctx.STRING().getText().length() - 1));
+        else if (ctx.INT() != null)
+            appendLine("stackPushI\n" + ctx.INT().getText());
+        else if (ctx.HEX() != null)
+            appendLine("stackPushI\n" + Long.parseLong(ctx.HEX().getText().substring(2), 16));
+        else if (ctx.BIN() != null)
+            appendLine("stackPushI\n" + Long.parseLong(ctx.BIN().getText().substring(2), 2));
+        else if (ctx.argumentArray() != null)
+            assignArgumentArrayToArray(ctx.argumentArray());
+        else {
+            SCPPParser.ConditionalValueContext val = ctx.conditionalValue();
+
+            evaluateExpression(val.expression(1));
+            appendLine("storeAtVar\nconditionalTrue");
+            evaluateExpression(val.expression(2));
+            appendLine("storeAtVar\nconditionalFalse");
+            evaluateExpression(val.expression(0));
+            appendLine("conditionalValueSet\nconditionalTrue\nconditionalFalse");
+
+            appendLine("stackPushA");
+        }
+    }
+
     public static void evaluateExpression(SCPPParser.ExpressionContext ctx) {
         if (ctx.value() != null) {
             evaluateValue(ctx.value());

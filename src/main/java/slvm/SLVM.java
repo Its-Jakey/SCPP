@@ -30,7 +30,7 @@ public class SLVM {
     private boolean isMouseDown;
     private final List<Integer> keysPressed;
     private final Stack<Integer> stack;
-    private final Stack<String> varStack;
+    private final VarStack varStack;
     private final boolean running;
     private final List<String> buffer;
     private final VMGraphics graphics;
@@ -182,7 +182,7 @@ public class SLVM {
         this.running = true;
         this.buffer = new ArrayList<>();
         this.stack = new Stack<>();
-        this.varStack = new Stack<>();
+        this.varStack = new VarStack();
         this.graphics = new VMGraphics();
         this.keysPressed = new ArrayList<>();
         this.image = new BufferedImage(480, 360, BufferedImage.TYPE_INT_RGB);
@@ -239,7 +239,10 @@ public class SLVM {
     }
 
     private void execute(String instruction) throws NoSuchAlgorithmException {
-        switch (instruction) { //TODO: Implement graphics
+        if (instruction == null)
+            System.out.println("Null instruction at pc " + pc);
+
+        switch (instruction) {
             case "ldi" -> a = StringEscapeUtils.unescapeJava(getNext());
             case "loadAtVar" -> a = getNextVarValue();
             case "storeAtVar" -> setNextVarValue(a);
@@ -440,15 +443,15 @@ public class SLVM {
             case "stackPeek" -> ram[getVar(getNext())] = varStack.peek();
             case "stackInc" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) + 1));
             case "stackDec" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) - 1));
-            case "stackAdd" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) + getIntValue(varStack.pop())));
-            case "stackSub" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) - getIntValue(varStack.pop())));
-            case "stackMul" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) * getIntValue(varStack.pop())));
-            case "stackDiv" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) / getIntValue(varStack.pop())));
-            case "stackBitwiseLsf" -> varStack.push(String.valueOf((int) getIntValue(varStack.pop()) << (int) getIntValue(varStack.pop())));
-            case "stackBitwiseRsf" -> varStack.push(String.valueOf((int) getIntValue(varStack.pop()) >> (int) getIntValue(varStack.pop())));
-            case "stackBitwiseAnd" -> varStack.push(String.valueOf((int) getIntValue(varStack.pop()) & (int) getIntValue(varStack.pop())));
-            case "stackBitwiseOr" ->  varStack.push(String.valueOf((int) getIntValue(varStack.pop()) | (int) getIntValue(varStack.pop())));
-            case "stackMod" -> varStack.push(String.valueOf(getIntValue(varStack.pop()) % getIntValue(varStack.pop())));
+            case "stackAdd" -> varStack.push(String.valueOf(getIntValue(varStack.swapPop()) + getIntValue(varStack.pop())));
+            case "stackSub" -> varStack.push(String.valueOf(getIntValue(varStack.swapPop()) - getIntValue(varStack.pop())));
+            case "stackMul" -> varStack.push(String.valueOf(getIntValue(varStack.swapPop()) * getIntValue(varStack.pop())));
+            case "stackDiv" -> varStack.push(String.valueOf(getIntValue(varStack.swapPop()) / getIntValue(varStack.pop())));
+            case "stackBitwiseLsf" -> varStack.push(String.valueOf((int) getIntValue(varStack.swapPop()) << (int) getIntValue(varStack.pop())));
+            case "stackBitwiseRsf" -> varStack.push(String.valueOf((int) getIntValue(varStack.swapPop()) >> (int) getIntValue(varStack.pop())));
+            case "stackBitwiseAnd" -> varStack.push(String.valueOf((int) getIntValue(varStack.swapPop()) & (int) getIntValue(varStack.pop())));
+            case "stackBitwiseOr" ->  varStack.push(String.valueOf((int) getIntValue(varStack.swapPop()) | (int) getIntValue(varStack.pop())));
+            case "stackMod" -> varStack.push(String.valueOf(getIntValue(varStack.swapPop()) % getIntValue(varStack.pop())));
             case "stackBoolAnd" -> {
                 boolean boolA = getIntValue(varStack.pop()) > 0;
                 boolean boolB = getIntValue(varStack.pop()) > 0;
@@ -462,11 +465,11 @@ public class SLVM {
                 varStack.push(boolA || boolB ? "1" : "0");
             }
             case "stackBoolEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "1" : "0");
-            case "stackLargerThanOrEqual" -> varStack.push(getIntValue(varStack.pop()) >= getIntValue(varStack.pop()) ? "1" : "0");
-            case "stackSmallerThanOrEqual" -> varStack.push(getIntValue(varStack.pop()) <= getIntValue(varStack.pop()) ? "1" : "0");
+            case "stackLargerThanOrEqual" -> varStack.push(getIntValue(varStack.swapPop()) >= getIntValue(varStack.pop()) ? "1" : "0");
+            case "stackSmallerThanOrEqual" -> varStack.push(getIntValue(varStack.swapPop()) <= getIntValue(varStack.pop()) ? "1" : "0");
             case "stackNotEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "0" : "1");
-            case "stackSmallerThan" -> varStack.push(getIntValue(varStack.pop()) < getIntValue(varStack.pop()) ? "1" : "0");
-            case "stackLargerThan" -> varStack.push(getIntValue(varStack.pop()) > getIntValue(varStack.pop()) ? "1" : "0");
+            case "stackSmallerThan" -> varStack.push(getIntValue(varStack.swapPop()) < getIntValue(varStack.pop()) ? "1" : "0");
+            case "stackLargerThan" -> varStack.push(getIntValue(varStack.swapPop()) > getIntValue(varStack.pop()) ? "1" : "0");
             case "usage" -> {
                 int used = 0;
                 for (boolean usedAddress : usedAddresses)
@@ -487,8 +490,10 @@ public class SLVM {
             }
             case "toAsciiValue" -> a = String.valueOf((int) getNextVarValue().charAt(0));
             case "fromAsciiValue" -> a = String.valueOf((char) getNextIntVar());
-            case "$sha" -> a = bytesToHex(MessageDigest.getInstance("SHA-256").digest(getNextVarValue().getBytes(StandardCharsets.UTF_8)));
+            case "$sha" -> a = bytesToHex(MessageDigest.getInstance("SHA-256").digest(getNextVarValue().getBytes(StandardCharsets.UTF_8))); //Don't implement this in other versions of the VM
             case "random" -> a = String.valueOf(Math.random());
+            case "stackPushI" -> varStack.push(getNext());
+            case "stackJoin" -> varStack.push(varStack.swapPop() + varStack.pop());
             default -> throw new VMException("Unknown instruction '" + instruction + "'", this);
         }
     }

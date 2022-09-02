@@ -210,11 +210,9 @@ public class Compiler implements SCPPListener {
             errorAndKill("Cannot use '" + keyword + "' keyword outside of function scope");
     }
 
-    public static String getOperatorInstruction(String op) {
-        if (op.equals(".."))
-            return "join";
-
+    public static String getOperatorSurname(String op) {
         return switch (op) {
+            case ".." -> "join";
             case "+" -> "add";
             case "-" -> "sub";
             case "*" -> "mul";
@@ -235,10 +233,16 @@ public class Compiler implements SCPPListener {
             case "^" -> "bitwiseXor";
             default -> {
                 errorAndKill("Unexpected operator: " + op);
-                printMessages();
                 yield "";
             }
-        } + "WithVar";
+        };
+    }
+
+    public static String getOperatorInstruction(String op) {
+        if (op.equals(".."))
+            return "join";
+
+        return getOperatorSurname(op) + "WithVar";
     }
 
     private void combineNamespace(Namespace source, Namespace definition) {

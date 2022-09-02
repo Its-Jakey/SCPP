@@ -122,6 +122,7 @@ public class Optimizer {
                     ret[i++] = "putPixel";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "putLine" -> {
                     ret[i++] = "putLine";
@@ -129,6 +130,7 @@ public class Optimizer {
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
                     ret[i + 2] = handleVar(assembledInstructions[i + 2]);
                     ret[i + 3] = handleVar(assembledInstructions[i + 3]);
+                    i += 3;
                 }
                 case "putRect" -> {
                     ret[i++] = "putRect";
@@ -136,6 +138,7 @@ public class Optimizer {
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
                     ret[i + 2] = handleVar(assembledInstructions[i + 2]);
                     ret[i + 3] = handleVar(assembledInstructions[i + 3]);
+                    i += 3;
                 }
                 case "setColor" -> {
                     ret[i++] = "setColor";
@@ -150,17 +153,14 @@ public class Optimizer {
                 case "round" -> {
                     ret[i++] = "round";
                     ret[i] = handleVar(assembledInstructions[i]);
-                    ret[i + 1] = handleVar(assembledInstructions[i + 1]);
                 }
                 case "floor" -> {
                     ret[i++] = "floor";
                     ret[i] = handleVar(assembledInstructions[i]);
-                    ret[i + 1] = handleVar(assembledInstructions[i + 1]);
                 }
                 case "ceil" -> {
                     ret[i++] = "ceil";
                     ret[i] = handleVar(assembledInstructions[i]);
-                    ret[i + 1] = handleVar(assembledInstructions[i + 1]);
                 }
                 case "cos" -> {
                     ret[i++] = "cos";
@@ -178,6 +178,7 @@ public class Optimizer {
                     ret[i++] = "atan2";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "mouseDown" -> ret[i] = "mouseDown";
                 case "mouseX" -> ret[i] = "mouseX";
@@ -194,11 +195,13 @@ public class Optimizer {
                     ret[i++] = "loadAtVarWithOffset";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "storeAtVarWithOffset" -> {
                     ret[i++] = "storeAtVarWithOffset";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "isKeyPressed" -> {
                     ret[i++] = "isKeyPressed";
@@ -209,11 +212,13 @@ public class Optimizer {
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
                     ret[i + 2] = handleVar(assembledInstructions[i + 2]);
+                    i += 2;
                 }
                 case "charAt" -> {
                     ret[i++] = "charAt";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "sizeOf" -> {
                     ret[i++] = "sizeOf";
@@ -223,6 +228,7 @@ public class Optimizer {
                     ret[i++] = "contains";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "join" -> {
                     ret[i++] = "join";
@@ -250,6 +256,7 @@ public class Optimizer {
                     ret[i++] = "setCloudVar";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "getCloudVar" -> {
                     ret[i++] = "getCloudVar";
@@ -259,11 +266,13 @@ public class Optimizer {
                     ret[i++] = "indexOfChar";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "goto" -> {
                     ret[i++] = "goto";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "imalloc" -> {
                     ret[i++] = "imalloc";
@@ -282,6 +291,7 @@ public class Optimizer {
                     ret[i++] = "free";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "getVarAddress" -> {
                     ret[i++] = "getVarAddress";
@@ -295,6 +305,7 @@ public class Optimizer {
                     ret[i++] = "copyVar";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "incA" -> ret[i] = "incA";
                 case "decA" -> ret[i] = "decA";
@@ -302,6 +313,7 @@ public class Optimizer {
                     ret[i++] = "arrayBoundsCheck";
                     ret[i] = handleVar(assembledInstructions[i]);
                     ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "getValueAtPointerOfA" -> ret[i] = "getValueAtPointerOfA";
                 case "stackPushA" -> ret[i] = "stackPushA";
@@ -354,6 +366,11 @@ public class Optimizer {
                     ret[i++] = "bitwiseNot";
                     ret[i] = handleVar(assembledInstructions[i]);
                 }
+                case "stackPushI" -> {
+                    ret[i++] = "stackPushI";
+                    ret[i] = assembledInstructions[i];
+                }
+                case "stackJoin" -> ret[i] = "stackJoin";
             }
         }
 

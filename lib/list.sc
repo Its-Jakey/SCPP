@@ -1,14 +1,20 @@
 #include <arrays>
 
-#define MAX_LIST_SIZE 128
+#define LIST_SIZE 64
 
 public namespace list {
-    public var items = malloc(MAX_LIST_SIZE);
-    var index = 0;
+    public var items;
+    var index;
+    var size;
 
     public func add(item) {
         items[index] = item;
         index = index + 1;
+
+        if (index > size - 1) {
+            size += LIST_SIZE;
+            items = arrays::resizeArray(items, size - LIST_SIZE, size);
+        }
     }
 
     public func get(idx) {
@@ -37,6 +43,12 @@ public namespace list {
     public func loadFromArray(array) {
         index = array[0];
         items = array[1];
+    }
+
+    public func new() {
+        items = malloc(LIST_SIZE);
+        index = 0;
+        size = LIST_SIZE;
     }
 }
 

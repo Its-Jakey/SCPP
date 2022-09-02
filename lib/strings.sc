@@ -42,6 +42,33 @@ public namespace strings {
         return _asm_("indexOfChar", string, char);
     }
 
+    public func endsWith(string, end) {
+        var stringSize = sizeOf(string);
+        var endSize = sizeOf(end);
+        var start = stringSize - endSize;
+
+        if (start < 0)
+            return 0;
+
+        for (i from 0 to endSize)
+            if (charAt(string, start + i) != charAt(end, i))
+                return 0;
+        return 1;
+    }
+
+    public func startsWith(string, start) {
+        var stringSize = sizeOf(string);
+        var startSize = sizeOf(start);
+
+        if (stringSize < startSize)
+            return 0;
+
+        for (i from 0 to startSize)
+            if (charAt(string, i) != charAt(start, i))
+                return 0;
+        return 1;
+    }
+
     public func split(text, at) { //at must be a char
         var ret = malloc(0);
         var cur = "";

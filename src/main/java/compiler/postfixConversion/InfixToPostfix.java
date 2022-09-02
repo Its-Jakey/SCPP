@@ -9,6 +9,7 @@ import java.util.Stack;
 
 import static compiler.Compiler.appendLine;
 import static compiler.Evaluators.evaluateValue;
+import static compiler.Evaluators.pushValueToStack;
 
 public class InfixToPostfix {
     private static int precedence(ValueOrOperatorOrID op){
@@ -55,8 +56,17 @@ public class InfixToPostfix {
         return ret;
     }
 
-    public static void evaluatePostfix(List<ValueOrOperatorOrID> postfix) {
+    private static void evaluatePostfixOnStack(List<ValueOrOperatorOrID> postfix) {
+        for (ValueOrOperatorOrID x : postfix) {
+            if (x.value() != null) {
+                pushValueToStack(x.value());
+            } else
+                appendLine("stack" + Compiler.getOperatorSurname(x.operator()).toUpperCase().charAt(0) + Compiler.getOperatorSurname(x.operator()).substring(1));
+        }
+        appendLine("stackPopA");
+    }
 
+    private static void evaluatePostfixWithVars(List<ValueOrOperatorOrID> postfix) {
         Stack<ValueOrOperatorOrID> stack = new Stack<>();
 
         for (ValueOrOperatorOrID x : postfix) {
@@ -98,6 +108,11 @@ public class InfixToPostfix {
 
         if (!stack.isEmpty())
             throw new RuntimeException("Postfix was not evaluated correctly, stack still has " + stack.size() + " items.");
+    }
+
+    public static void evaluatePostfix(List<ValueOrOperatorOrID> postfix) {
+        evaluatePostfixOnStack(postfix);
+        //evaluatePostfixWithVars(postfix);
     }
 
     public static void addExpressionToList(SCPPParser.ExpressionContext expression, List<ValueOrOperatorOrID> ret) {

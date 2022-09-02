@@ -10,6 +10,7 @@ namespace benchmark {
                 return 0;
             }
         }
+        println(num);
         return 1;
     }
 
@@ -26,7 +27,7 @@ namespace benchmark {
         var t = time::getRuntimeMillis();
 
         print("done in ");
-        print(t/1000);
+        print(t / 1000);
         print("s");
     }
 }

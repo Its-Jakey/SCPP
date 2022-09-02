@@ -131,3 +131,5 @@ Notation:
 | `toAsciiValue`              | [char]                   | sets the A register to the ascii value of [char]
 | `fromAsciiValue`            | [ascii]                  | sets the A register to the char with the ascii value of [ascii]
 | `bitwiseNot`                | [var]                    | sets the A register to the bitwise not of [var]
+| `stackPushI`                | value                    | pushes value onto the stack
+| `stackJoin`                 |                          | joins the top 2 values of the stack into a string
