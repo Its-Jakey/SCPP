@@ -1,7 +1,7 @@
 jmp
-191
+197
 jmp
-190
+196
 imalloc
 4
 storeAtVar
@@ -48,6 +48,9 @@ storeAtVar
 temp2
 getValueAtPointer
 temp2
+print
+ldi
+
 println
 imalloc
 2
@@ -187,6 +190,9 @@ storeAtVar
 temp12
 getValueAtPointer
 temp12
+print
+ldi
+
 println
 ret
 jts

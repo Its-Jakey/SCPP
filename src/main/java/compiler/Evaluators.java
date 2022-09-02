@@ -123,8 +123,7 @@ public class Evaluators {
                     varName = getVariable(getNamespace(variable.ID().getText()), null, variable.variable().ID().getText()).id();
                 else
                     varName = getVariable(currentProgram.currentNamespace, currentProgram.currentFunction, variable.ID().getText()).id();
-            }
-            else if (ctx.functionCall() != null)
+            } else if (ctx.functionCall() != null)
                 varName = evaluateFunctionCall(ctx.functionCall()).returnVariable;
             if (ctx.arrayIndex() != null) {
                 loadValueAtArrayIndex(varName, ctx.arrayIndex());

@@ -44,7 +44,7 @@ public class Main {
             System.exit(0);
         }
 
-        if (!cmd.hasOption("input"))
+        if (!cmd.hasOption("input") && !cmd.hasOption("test"))
             Ide.createProperInstance();
         else {
 

@@ -1,9 +1,12 @@
 jmp
-8
+11
 jmp
-7
+10
 ldi
 Hello World!
+print
+ldi
+
 println
 ret
 jts

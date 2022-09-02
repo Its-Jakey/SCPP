@@ -242,7 +242,7 @@ namespace wireframe {
         createCube({100, 50, 0}, 50, 0x00FFFF);
         createCube({50, 50, 0}, 25, 0xFF0000);
         createPyramid({110, 110, 0}, 50, 0x0000FF);
-        //create3DSphere({200, 200, 0}, 50, 0xFFFF00, 25);
+        create3DSphere({200, 200, 0}, 50, 0xFFFF00, 25);
     }
 
     public func main() {

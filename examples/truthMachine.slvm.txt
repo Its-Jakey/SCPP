@@ -1,7 +1,35 @@
 jmp
-90
+118
+ldi
+up arrow
+storeAtVar
+input_KEY_UP
+ldi
+down arrow
+storeAtVar
+input_KEY_DOWN
+ldi
+left arrow
+storeAtVar
+input_KEY_LEFT
+ldi
+right arrow
+storeAtVar
+input_KEY_RIGHT
+ldi
+space
+storeAtVar
+input_KEY_SPACE
+ldi
+enter
+storeAtVar
+input_KEY_ENTER
+ldi
+escape
+storeAtVar
+input_KEY_ESCAPE
 jmp
-12
+40
 mouseX
 storeAtVar
 __builtins___asm__return
@@ -11,7 +39,7 @@ storeAtVar
 input_mouseX_return
 ret
 jmp
-22
+50
 mouseY
 storeAtVar
 __builtins___asm__return
@@ -21,7 +49,7 @@ storeAtVar
 input_mouseY_return
 ret
 jmp
-32
+60
 mouseDown
 storeAtVar
 __builtins___asm__return
@@ -31,7 +59,7 @@ storeAtVar
 input_isMouseDown_return
 ret
 jmp
-47
+75
 loadAtVar
 input_isKeyPressed_key
 storeAtVar
@@ -46,7 +74,7 @@ storeAtVar
 input_isKeyPressed_return
 ret
 jmp
-62
+90
 loadAtVar
 input_ask_message
 storeAtVar
@@ -62,13 +90,13 @@ input_ask_return
 ret
 ret
 jmp
-89
+117
 ldi
 1/0
 storeAtVar
 input_ask_message
 jts
-49
+77
 loadAtVar
 input_ask_return
 storeAtVar
@@ -76,14 +104,14 @@ test_main_input
 loadAtVar
 test_main_input
 jf
-86
+114
 ldi
 1
 print
 loadAtVar
 test_main_input
 jt
-79
+107
 ldi
 0
 print
@@ -91,7 +119,7 @@ ret
 jts
 2
 jts
-63
+91
 jts
-65
+93
 done
