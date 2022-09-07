@@ -69,6 +69,26 @@ public namespace strings {
         return 1;
     }
 
+    public func firstIndexOf(string, x) {
+        var size = sizeOf(string);
+        for (i from 0 to size)
+            if (charAt(string, i) == x)
+                return i;
+        return -1;
+    }
+
+    public func lastIndexOf(string, x) {
+        var size = sizeOf(string);
+        var i = size - 1;
+
+        while (i > 0) {
+            if (charAt(string, i) == x)
+                return i;
+            i--;
+        }
+        return -1;
+    }
+
     public func split(text, at) { //at must be a char
         var ret = malloc(0);
         var cur = "";

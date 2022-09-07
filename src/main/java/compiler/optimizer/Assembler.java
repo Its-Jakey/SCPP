@@ -20,7 +20,7 @@ public class Assembler {
 
             if (line.startsWith(":") && !lines[i - 1].equals("ldi"))
                 labels.put(line.substring(1), line_n);
-            else if (!line.startsWith(";")) {
+            else if (!line.startsWith("---#")) {
                 line_n++;
                 ret.append("\n").append(line);
             }

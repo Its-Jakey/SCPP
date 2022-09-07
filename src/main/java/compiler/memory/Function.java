@@ -12,7 +12,7 @@ public class Function {
     public final LinkedHashMap<String, String> localVariables;
     public final boolean isPublic;
 
-    public final String returnVariable;
+    public String returnVariable;
     public final String name;
     private final String variablePrefix;
     public SCPPParser.FunctionDeclarationContext context = null;

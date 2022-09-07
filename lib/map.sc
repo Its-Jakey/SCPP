@@ -10,6 +10,15 @@ public namespace map {
     public func put(key, value) {
         keys[ptr] = key;
         values[ptr] = value;
+        ptr++;
+    }
+
+    public func clear() {
+        ptr = 0;
+        free(keys, MAX_SIZE);
+        free(values, MAX_SIZE);
+        keys = malloc(MAX_SIZE);
+        values = malloc(MAX_SIZE);
     }
 
     public func get(key) {

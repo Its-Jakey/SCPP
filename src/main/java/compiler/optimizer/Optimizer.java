@@ -18,7 +18,9 @@ public class Optimizer {
         String[] ret = new String[assembledInstructions.length];
 
         for (int i = 0; i < assembledInstructions.length; i++) {
-            switch (assembledInstructions[i]) {
+            String instruction = assembledInstructions[i];
+
+            switch (instruction) {
                 case "ldi" -> {
                     ret[i++] = "ldi";
                     ret[i] = assembledInstructions[i];
@@ -153,14 +155,20 @@ public class Optimizer {
                 case "round" -> {
                     ret[i++] = "round";
                     ret[i] = handleVar(assembledInstructions[i]);
+                    ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "floor" -> {
                     ret[i++] = "floor";
                     ret[i] = handleVar(assembledInstructions[i]);
+                    ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "ceil" -> {
                     ret[i++] = "ceil";
                     ret[i] = handleVar(assembledInstructions[i]);
+                    ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    i++;
                 }
                 case "cos" -> {
                     ret[i++] = "cos";
@@ -347,7 +355,7 @@ public class Optimizer {
                 case "stackBoolEqual" -> ret[i] = "stackBoolEqual";
                 case "stackLargerThanOrEqual" -> ret[i] = "stackLargerThanOrEqual";
                 case "stackSmallerThanOrEqual" -> ret[i] = "stackSmallerThanOrEqual";
-                case "stackNotEqual" -> ret[i] = "stackNotEqual";
+                case "stackBoolNotEqual" -> ret[i] = "stackBoolNotEqual";
                 case "stackSmallerThan" -> ret[i] = "stackSmallerThan";
                 case "stackLargerThan" -> ret[i] = "stackLargerThan";
                 case "conditionalValueSet" -> {
@@ -371,6 +379,7 @@ public class Optimizer {
                     ret[i] = assembledInstructions[i];
                 }
                 case "stackJoin" -> ret[i] = "stackJoin";
+                default -> throw new IllegalStateException("Unknown instruction: " + instruction + ", at pc: " + i);
             }
         }
 

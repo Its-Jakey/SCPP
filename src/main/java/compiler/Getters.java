@@ -63,4 +63,23 @@ public class Getters {
             errorAndKill("Unknown function '" + name + "'");
         return namespace.functions.get(Function.getID(name, args));
     }
+
+    public static Function getFunction(SCPPParser.FunctionCallContext ctx) {
+        List<SCPPParser.ExpressionContext> args = Evaluators.evaluateArgumentArray(ctx.argumentArray());
+        SCPPParser.VariableContext variable = ctx.variable();
+        Function ret = null;
+
+        if (variable.variable() != null)
+            ret = getFunction(getNamespace(variable.ID().getText()), variable.variable().ID().getText(), args);
+        else if (builtins.functions.containsKey(Function.getID(variable.ID().getText(), args)))
+            ret = builtins.functions.get(Function.getID(variable.ID().getText(), args));
+        else if (currentProgram.currentFunction != null && currentProgram.currentFunction.getID().equals(Function.getID(variable.ID().getText(), args)))
+            ret = currentProgram.currentFunction;
+        else if (!currentProgram.currentNamespace.functions.containsKey(Function.getID(variable.ID().getText(), args))) {
+            errorAndKill("Unknown function '" + variable.ID().getText() + "'");
+        }
+        else
+            ret = currentProgram.currentNamespace.functions.get(Function.getID(variable.ID().getText(), args));
+        return ret;
+    }
 }

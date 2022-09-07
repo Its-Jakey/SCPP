@@ -1,0 +1,68 @@
+Registers:
+r[0..15]
+
+Flags:
+Carry(C)
+Zero(Z)
+External(E)
+
+Memory:
+0x0000 0xE000 -> Program
+0xE000 0xF000 -> Stack
+0xF000 0xFE00 -> Variables
+0xFE00 0xFFFF -> System variables
+
+Instruction set:
+00: HLT                         Stops the execution of code.
+01: LD {reg} {addr}             Loads the value at {addr} into {reg}
+02: LDI {reg} {imm}             Loads {imm} into {reg}
+03: ST {reg} {addr}             Stores {reg} into {addr}
+04: JMP {label}                 Jumps to {label}
+05: AND {regA} {regB}           Ands {regA} with {regB} and stores the result in {regA}
+06: OR {regA} {regB}            Ors {regA} with {regB} and stores the result in {regB}
+07: ADD {regA} {regB}           Adds {regA} with {regB} and stores the result in {regB}
+08: SUB {regA} {regB}           Subs {regA} with {regB} and stores the result in {regB}
+09: MUL {regA} {regB}           Muls {regA} with {regB} and stores the result in {regB}
+0A: DIV {regA} {regB}           Divs {regA} with {regB} and stores the result in {regB}
+0B: JZ {label}                  Jumps to {label} if the zero flag is set
+0C: JNZ {label}                 Jumps to {label} if the zero flag is not set
+0D: JC {label}                  Jumps to {label} if the carry flag is set
+0E: JNC {label}                 Jumps to {label} if the carry flag is not set
+0F: CMP {regA} {regB}           Subtracts {regA} from {regB}, then sets C and Z flags appropriatly
+10: STZ                         Sets the zero flag
+11: CLZ                         Clears the zero flag
+12: STC                         Sets the carry flag
+13: CLC                         Clears the carry flag
+14: PSH {reg}                   Pushes {reg} to the stack
+15: POP {reg}                   Pops the stack onto {reg}
+16: CALL {label}                Calls the subroutine at {label}
+17: RET                         Returns from the current subroutine
+18: SYSCALL {imm}               Calls the system subroutine {imm}
+19: MOV {dest} {source}         Sets {dest} to {source}
+1A: STE                         Sets the external flag
+1B: CLE                         Clears the external flag
+1C: JE {label}                  Jumps to {label} if the external flag is set
+1D: JNE {label}                 Jumps to {label} if the external flag is not set
+1E: LDF {reg} {addr} {offset}   Loads {reg} with the value at {addr} + {offset}
+1F: STF {reg} {addr} {offset}   Stores {reg} are {addr} + {offset}
+20: INC {reg}                   Increments {reg}
+21: DEC {reg}                   Decrements {reg}
+22: CON {regA} {regB}           Concats {regA} with {regB} and stores the result in {regA}
+23: LDP {reg} {valueReg}           Loads the value at the memory address {valueReg}
+24: STP {reg} {addrReg}            Stores {reg} at the memory address {addrReg}
+
+
+Syscalls:
+    0: READ_LINE
+    1: PRINT_STRING
+    2: GET_CURRENT_DIRECTORY
+    3: SET_CURRENT_DIRECTORY
+    4: LIST_FILES
+    5: CREATE_FILE
+    6: READ_FROM_FILE
+    7: WRITE_TO_FILE
+    8: CREATE_DIRECTORY
+    9: FILE_EXISTS
+    10: GET_ABSOLUTE_PATH
+    11: FILE_IS_DIRECTORY
+    12: NEW_LINE

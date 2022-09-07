@@ -360,6 +360,7 @@ public class SLVM {
             case "isKeyPressed" -> a = getBool(keysPressed.contains(mapKey(getNextVarValue())));
             case "createColor" -> a = String.valueOf(new Color((int) getNextIntVar(), (int) getNextIntVar(), (int) getNextIntVar()).getRGB());
             case "charAt" -> {
+                //String str = StringEscapeUtils.unescapeJava(getNextVarValue());
                 String str = getNextVarValue();
                 int charAt = (int) getNextIntVar();
 
@@ -405,8 +406,10 @@ public class SLVM {
                 int addr = (int) getNextIntVar();
                 int words = (int) getNextIntVar();
 
-                for (int i = addr; i < addr + words; i++)
+                for (int i = addr; i < addr + words; i++) {
                     usedAddresses[i] = false;
+                    ram[i] = "0";
+                }
             }
             case "nop" -> {}
             case "getVarAddress" -> getVar(getNext());
@@ -464,10 +467,10 @@ public class SLVM {
 
                 varStack.push(boolA || boolB ? "1" : "0");
             }
-            case "stackBoolEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "1" : "0");
+            case "stackBoolEqual" -> varStack.push(isEqual(varStack.pop(), varStack.pop()) ? "1" : "0");
             case "stackLargerThanOrEqual" -> varStack.push(getIntValue(varStack.swapPop()) >= getIntValue(varStack.pop()) ? "1" : "0");
             case "stackSmallerThanOrEqual" -> varStack.push(getIntValue(varStack.swapPop()) <= getIntValue(varStack.pop()) ? "1" : "0");
-            case "stackNotEqual" -> varStack.push(varStack.pop().equals(varStack.pop()) ? "0" : "1");
+            case "stackBoolNotEqual" -> varStack.push(isEqual(varStack.pop(), varStack.pop()) ? "0" : "1");
             case "stackSmallerThan" -> varStack.push(getIntValue(varStack.swapPop()) < getIntValue(varStack.pop()) ? "1" : "0");
             case "stackLargerThan" -> varStack.push(getIntValue(varStack.swapPop()) > getIntValue(varStack.pop()) ? "1" : "0");
             case "usage" -> {

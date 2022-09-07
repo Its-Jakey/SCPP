@@ -62,13 +62,9 @@ public namespace fs {
             file::unpack(cur);
             cur = file::getChild(files[i]);
 
-            if (cur == -1) {
-                println("Unknown file: ", path);
+            if (cur == -1)
                 return -1;
-            }
         }
-        if (cur == -1)
-            println("Unknown file: ", path);
         return cur;
     }
 
@@ -104,10 +100,38 @@ public namespace fs {
             file::unpack(tmp);
             file::addChild(newFile);
             arrays::copyTo(file::pack(), tmp, file::fileSize);
+
+            return tmp;
         }
     }
 
-    public func createDirectory(path, name) {
+    public func createFile(path_) {
+        var files = strings::split(path_, "/");
+        var path = arrays::join(arrays::createSubArray(files, 0, strings::splitSize - 1), strings::splitSize - 1, "/");
+        var name = files[strings::splitSize - 1];
+
+        createFile(path, name);
+    }
+
+    public func isDirectory(path) {
+        var files = strings::split(path, "/");
+        var cur = root;
+
+        for (i from 1 to strings::splitSize) {
+            file::unpack(cur);
+            cur = file::getChild(files[i]);
+
+            if (cur == -1)
+                return 0;
+        }
+        return cur[1];
+    }
+
+    public func createDirectory(path_) {
+        var files = strings::split(path_, "/");
+        var path = arrays::join(arrays::createSubArray(files, 0, strings::splitSize - 1), strings::splitSize - 1, "/");
+        var name = files[strings::splitSize - 1];
+
         file::new();
         file::name = name;
         file::isDirectory = 1;
@@ -124,30 +148,31 @@ public namespace fs {
         }
     }
 
-    public func writeToFile(path, name, data) {
-        var path2 = concat(path, name);
+    public func writeToFile(path, data) {
+        var files = strings::split(path, "/");
+        var parentPath = arrays::join(arrays::createSubArray(files, 0, strings::splitSize - 1), strings::splitSize - 1, "/");
 
-        if (exists(path2) == 0)
-            createFile(path, name);
-        var tmp = getFile(path2);
+        if (exists(path) == 0)
+            createFile(parentPath, files[strings::splitSize - 1]);
+        var tmp = getFile(path);
         tmp[4] = data;
     }
 
     public func listDirectory(dir) {
         file::unpack(getFile(dir));
-        var ret = concat("Directory of ", dir);
+        var ret = "Directory of "..dir;
         var dirs = 0;
 
         for (i from 0 to file::childrenCount) {
             var child = file::children[i];
 
             if (child[1]) { //If file is a directory
-                ret = concat(ret, "\n<DIR>    ", child[0]);
+                ret ..= "\n<DIR>    "..child[0];
                 dirs = dirs + 1;
             } else
-                ret = concat(ret, "\n         ", child[0]);
+                ret ..= "\n         "..child[0];
         }
-        ret = concat(ret, "\n\t", file::childrenCount - dirs, " File(s), ", dirs, " Dir(s)");
+        ret ..= "\n\t"..(file::childrenCount - dirs).." File(s), "..dirs.." Dir(s)";
         return ret;
     }
 }

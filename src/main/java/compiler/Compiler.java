@@ -565,10 +565,8 @@ public class Compiler implements SCPPListener {
             varName = currentProgram.currentNamespace.name + "_" + ctx.ID().getText();
             currentProgram.currentNamespace.variables.put(ctx.ID().getText(), new Variable(varName, ctx.pub != null));
         }
-        if (ctx.expression() != null) {
-            evaluateExpression(ctx.expression());
-            appendLine("storeAtVar\n" + varName);
-        }
+        if (ctx.expression() != null)
+            setVariableToExpression(ctx.expression(), varName);
     }
 
     @Override
@@ -616,9 +614,18 @@ public class Compiler implements SCPPListener {
                 setValueAtArrayIndex(var.id(), ctx.arrayIndex(), ctx.expression());
                 return;
             }
-            evaluateExpression(ctx.expression());
-            appendLine("storeAtVar\n" + var.id());
+            setVariableToExpression(ctx.expression(), var.id());
         }
+    }
+
+    private static void setVariableToExpression(SCPPParser.ExpressionContext expression, String var) {
+        if (expression.value() != null && expression.value().functionCall() != null && false) { //TODO: Fix this
+            setVariableToFunctionCall(expression.value().functionCall(), var);
+            return;
+        }
+
+        evaluateExpression(expression);
+        appendLine("storeAtVar\n" + var);
     }
 
     @Override

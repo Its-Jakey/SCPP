@@ -11,7 +11,7 @@ public namespace list {
         items[index] = item;
         index = index + 1;
 
-        if (index > size - 1) {
+        if (index > (size - 1)) {
             size += LIST_SIZE;
             items = arrays::resizeArray(items, size - LIST_SIZE, size);
         }
@@ -33,7 +33,10 @@ public namespace list {
     }
 
     public func toArray() {
-        return arrays::createSubArray(items, 0, index);
+        var ret = arrays::createSubArray(items, 0, index);
+        free(items, size);
+
+        return ret;
     }
 
     public func getArrayForm() {
@@ -46,6 +49,13 @@ public namespace list {
     }
 
     public func new() {
+        items = malloc(LIST_SIZE);
+        index = 0;
+        size = LIST_SIZE;
+    }
+
+    public func clear() {
+        free(items, size);
         items = malloc(LIST_SIZE);
         index = 0;
         size = LIST_SIZE;

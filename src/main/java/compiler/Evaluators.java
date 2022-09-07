@@ -35,16 +35,48 @@ public class Evaluators {
         appendLine("setValueAtPointer\n" + endTemp());
     }
 
+    private static void setVariableToArrayItem(String array, String var, SCPPParser.ExpressionContext index) {
+        evaluateExpression(index);
+        appendLine("addWithVar\n" + array);
+        appendLine("getValueAtPointerOfA");
+        appendLine("storeAtVar\n" + var);
+    }
+
+    private static void setArrayItemToVariable(String array, String var, SCPPParser.ExpressionContext index) {
+        appendLine("stackPush\n" + var);
+
+        evaluateExpression(index);
+        appendLine("addWithVar\n" + array);
+        appendLine("storeAtVar\n" + var); //Address of the item
+
+        appendLine("stackPopA");
+        appendLine("setValueAtPointer\n" + var);
+    }
+
+    private static void setValueAtArrayIndex2(SCPPParser.ArrayIndexContext arrayIndex, String current, SCPPParser.ExpressionContext value) {
+        if (arrayIndex.arrayIndex() != null) {
+            setVariableToArrayItem(current, current, arrayIndex.expression());
+            setValueAtArrayIndex2(arrayIndex.arrayIndex(), current, value);
+        } else {
+            evaluateExpression(arrayIndex.expression());
+            appendLine("addWithVar\n" + current);
+            appendLine("storeAtVar\n" + current); //Address of the item
+
+            evaluateExpression(value);
+            appendLine("setValueAtPointer\n" + current);
+        }
+    }
+
     public static void getValueAtIndex(String array, SCPPParser.ArrayIndexContext index, String indexName) {
         if (index == null) return;
 
         evaluateExpression(index.expression());
-        appendLine("addWithVar\n" + array);
-        appendLine("storeAtVar\n" + indexName);
-        appendLine("getValueAtPointer\n" + indexName);
+        appendLine("addWithVar\n" + array); //Get the address of the item
+        appendLine("storeAtVar\n" + indexName); //Set indexName to that address
+        appendLine("getValueAtPointer\n" + indexName); //Gets the item
 
-        if (index.arrayIndex() != null)
-            appendLine("storeAtVar\n" + indexName);
+        if (index.arrayIndex() != null) //If the item is not an array
+            appendLine("storeAtVar\n" + indexName); //Set indexName to the item that is an array
         getValueAtIndex(indexName, index.arrayIndex(), indexName);
     }
 
@@ -70,6 +102,16 @@ public class Evaluators {
         endTemp();
     }
 
+    public static void setVariableToFunctionCall(SCPPParser.FunctionCallContext ctx, String var) {
+        Function function = getFunction(ctx);
+
+        String realReturn = function.returnVariable.substring(0);
+        function.returnVariable = var;
+
+        function.call(evaluateArgumentArray(ctx.argumentArray()));
+        function.returnVariable = realReturn;
+    }
+
     public static void evaluateValue(SCPPParser.ValueContext ctx) {
         if (ctx.variable() != null || ctx.functionCall() != null) {
             String varName = null;
@@ -81,8 +123,7 @@ public class Evaluators {
                     varName = getVariable(getNamespace(variable.ID().getText()), null, variable.variable().ID().getText()).id();
                 else
                     varName = getVariable(currentProgram.currentNamespace, currentProgram.currentFunction, variable.ID().getText()).id();
-            }
-            else if (ctx.functionCall() != null)
+            } else if (ctx.functionCall() != null)
                 varName = evaluateFunctionCall(ctx.functionCall()).returnVariable;
             if (ctx.arrayIndex() != null)
                 loadValueAtArrayIndex(varName, ctx.arrayIndex());
@@ -178,24 +219,8 @@ public class Evaluators {
     }
 
     public static Function evaluateFunctionCall(SCPPParser.FunctionCallContext ctx) {
-        List<SCPPParser.ExpressionContext> args = evaluateArgumentArray(ctx.argumentArray());
-        SCPPParser.VariableContext variable = ctx.variable();
-        Function ret = null;
-
-        if (variable.variable() != null)
-            ret = getFunction(getNamespace(variable.ID().getText()), variable.variable().ID().getText(), args);
-        else if (builtins.functions.containsKey(Function.getID(variable.ID().getText(), args)))
-            ret = builtins.functions.get(Function.getID(variable.ID().getText(), args));
-        else if (currentProgram.currentFunction != null && currentProgram.currentFunction.getID().equals(Function.getID(variable.ID().getText(), args)))
-            ret = currentProgram.currentFunction;
-        else if (!currentProgram.currentNamespace.functions.containsKey(Function.getID(variable.ID().getText(), args))) {
-            errorAndKill("Unknown function '" + variable.ID().getText() + "'");
-        }
-        else
-            ret = currentProgram.currentNamespace.functions.get(Function.getID(variable.ID().getText(), args));
-        if (ret == null)
-            Compiler.printMessages();
-        Objects.requireNonNull(ret).call(args);
+        Function ret = getFunction(ctx);
+        ret.call(evaluateArgumentArray(ctx.argumentArray()));
         return ret;
     }
 
