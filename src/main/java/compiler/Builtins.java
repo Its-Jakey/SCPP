@@ -159,7 +159,8 @@ public class Builtins extends Namespace {
             else {
                 String tmp = args.get(0).value().STRING().getText();
                 try {
-                    appendLine("ldi\n" + StringEscapeUtils.escapeJava(Files.readString(Path.of(Compiler.topLevelPath + "/" + tmp.substring(1, tmp.length() - 1)))));
+                    appendLine("ldi\n" + StringEscapeUtils.escapeJava(Files.readString(Path.of(Compiler.topLevelPath + "/" + tmp.substring(1, tmp.length() - 1))))
+                            .replaceAll("\\\\\"", "\""));
                     appendLine("storeAtVar\n" + super.returnVariable);
                 } catch (IOException e) {
                     error(e.toString());

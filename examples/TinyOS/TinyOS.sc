@@ -41,6 +41,12 @@ namespace OS {
         fs::writeToFile("/bin/cat.bin", assembler::assemble(readFromLocalFile("fs/bin/cat.asm")));
         fs::writeToFile("/bin/ls.bin", assembler::assemble(readFromLocalFile("fs/bin/ls.asm")));
         fs::writeToFile("/bin/touch.bin", assembler::assemble(readFromLocalFile("fs/bin/touch.asm")));
+        fs::writeToFile("/bin/mkdir.bin", assembler::assemble(readFromLocalFile("fs/bin/mkdir.asm")));
+        fs::writeToFile("/bin/rm.bin", assembler::assemble(readFromLocalFile("fs/bin/rm.asm")));
+        fs::writeToFile("/bin/rmdir.bin", assembler::assemble(readFromLocalFile("fs/bin/rmdir.asm")));
+        fs::writeToFile("/bin/mv.bin", assembler::assemble(readFromLocalFile("fs/bin/mv.asm")));
+        fs::writeToFile("/bin/cp.bin", assembler::assemble(readFromLocalFile("fs/bin/cp.asm")));
+        fs::writeToFile("/bin/echo.bin", assembler::assemble(readFromLocalFile("fs/bin/echo.asm")));
     }
 
     func setupCommands() {

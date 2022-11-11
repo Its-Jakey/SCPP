@@ -1,4 +1,5 @@
 #include <strings>
+#include <math>
 
 public namespace cloud {
     var chars = "[[[[[[[[[[_ abcdefghijklmnopqrstuvwxyz1234567890)(*&^%$#@!<>?,.";
@@ -9,64 +10,57 @@ public namespace cloud {
     public func getVar(varName) {
         return _asm_("getCloudVar", varName);
     }
-    public func decompress(data, special_word) {
+    public func decompress(data, special_word, wordLen, repeatLen) {
         var ret = "";
+        var len = strings::sizeOf(data);
+        var i = 0;
 
-        for (i from 0 to strings::sizeOf(data) by 2) {
-            var word = strings::charAt(data, i)..strings::charAt(data, i + 1);
+        while (i < len) {
+            var word = strings::substring(data, i, i + wordLen);
 
             if (word == special_word) {
-                i = i + 2;
-                var wordToRepeat = strings::charAt(data, i)..strings::charAt(data, i + 1);
+                i += wordLen;
 
-                if (wordToRepeat == special_word)
-                    ret = ret..special_word;
-                if (wordToRepeat != special_word) {
-                    i = i + 2;
-                    var repeats = strings::charAt(data, i)..strings::charAt(data, i + 1);
+                var wordToRepeat = strings::substring(data, i, i + wordLen);
+                i += wordLen;
 
-                    for (repeat from 0 to repeats)
-                        ret = ret..wordToRepeat;
-                }
+                var repeats = strings::substring(data, i, i + repeatLen);
+                i += repeatLen;
+
+                for (repeat from 0 to repeats)
+                    ret ..= wordToRepeat;
+            } else {
+                ret ..= word;
+                i += wordLen;
             }
-            if (word != special_word)
-                ret = ret..word;
         }
 
         return ret;
     }
 
-    public func compress(input, special_word) {
+    public func compress(input, special_word, wordLen, repeatLen) {
+        var maxRepeat = "1"..strings::repeat("0", repeatLen);
+        var minRepeats = math::ceil((wordLen + repeatLen) / wordLen);
+        
         var len = strings::sizeOf(input);
         var ret = "";
+        var i = 0;
 
-        for (i from 0 to len by 2) {
-            var word = strings::charAt(input, i)..strings::charAt(input, i + 1);
+        while (i < len) {
+            var word = strings::substring(input, i, i + wordLen);
             var newWord = word;
             var count = 0;
 
-            while (i < len && newWord == word) {
-                count = count + 1;
-                i = i + 2;
-                newWord = strings::charAt(input, i)..strings::charAt(input, i + 1);
+            while ((i < len) && (newWord == word) && (count < maxRepeat)) {
+                count++;
+                i += wordLen;
+                newWord = strings::substring(input, i, i + wordLen);
             }
-            i = i - 2;
 
-            if (count > 2) {
-                ret = ret..special_word;
-                ret = ret..word;
-                ret = ret..count;
-            }
-            if (count < 3) {
-                for (i2 from 0 to count) {
-                    if (word == special_word) {
-                        ret = ret..special_word;
-                        ret = ret..special_word;
-                    }
-                    if (word != special_word)
-                        ret = ret..word;
-                }
-            }
+            if (count > minRepeats)
+                ret ..= special_word..word..strings::repeat("0", repeatLen - strings::sizeOf(count))..count;
+            else 
+                ret ..= strings::repeat(word, count);
         }
         return ret;
     }
@@ -90,7 +84,9 @@ public namespace cloud {
 
         for (i from 0 to strings::sizeOf(value) by 2) {
             var idx = strings::charAt(value, i)..strings::charAt(value, i + 1);
-            ret = ret..strings::charAt(chars, idx);
+
+            if (idx != 0)
+                ret = ret..strings::charAt(chars, idx);
         }
         return ret;
     }

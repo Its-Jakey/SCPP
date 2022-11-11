@@ -35,38 +35,6 @@ public class Evaluators {
         appendLine("setValueAtPointer\n" + endTemp());
     }
 
-    private static void setVariableToArrayItem(String array, String var, SCPPParser.ExpressionContext index) {
-        evaluateExpression(index);
-        appendLine("addWithVar\n" + array);
-        appendLine("getValueAtPointerOfA");
-        appendLine("storeAtVar\n" + var);
-    }
-
-    private static void setArrayItemToVariable(String array, String var, SCPPParser.ExpressionContext index) {
-        appendLine("stackPush\n" + var);
-
-        evaluateExpression(index);
-        appendLine("addWithVar\n" + array);
-        appendLine("storeAtVar\n" + var); //Address of the item
-
-        appendLine("stackPopA");
-        appendLine("setValueAtPointer\n" + var);
-    }
-
-    private static void setValueAtArrayIndex2(SCPPParser.ArrayIndexContext arrayIndex, String current, SCPPParser.ExpressionContext value) {
-        if (arrayIndex.arrayIndex() != null) {
-            setVariableToArrayItem(current, current, arrayIndex.expression());
-            setValueAtArrayIndex2(arrayIndex.arrayIndex(), current, value);
-        } else {
-            evaluateExpression(arrayIndex.expression());
-            appendLine("addWithVar\n" + current);
-            appendLine("storeAtVar\n" + current); //Address of the item
-
-            evaluateExpression(value);
-            appendLine("setValueAtPointer\n" + current);
-        }
-    }
-
     public static void getValueAtIndex(String array, SCPPParser.ArrayIndexContext index, String indexName) {
         if (index == null) return;
 

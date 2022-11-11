@@ -133,3 +133,9 @@ Notation:
 | `bitwiseNot`                | [var]                    | sets the A register to the bitwise not of [var]
 | `stackPushI`                | value                    | pushes value onto the stack
 | `stackJoin`                 |                          | joins the top 2 values of the stack into a string
+| `fillCircle`                | [x], [y], [diameter]     | draws a filled circle at [x], [y] with daiamater [daiameter]
+| `playSound`                 | [sound]                  | plays the sound [sound]
+| `startSound`                | [sound]                  | starts playing the sound [sound]
+| `stopSounds`                |                          | stops playing all sounds
+| `setPitch`                  | [pitch]                  | sets the pitch of the sound to [pitch]
+| `setVolume`                 | [volume]                 | sets the volume of the sound to [volume]

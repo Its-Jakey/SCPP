@@ -7,10 +7,12 @@ public class Program {
     public Namespace currentNamespace = null;
     public Function currentFunction = null;
     public String fileName;
+    public String realFileName;
     public int level = 0;
 
     public Program(String fileName) {
         this.fileName = fileName;
+        this.realFileName = fileName;
         namespaces = new LinkedHashMap<>();
     }
 

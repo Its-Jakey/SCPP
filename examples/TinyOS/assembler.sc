@@ -77,6 +77,8 @@
 #define SYSCALL_GET_ABSOLUTE_PATH 10
 #define SYSCALL_FILE_IS_DIRECTORY 11
 #define SYSCALL_NEW_LINE 12
+#define SYSCALL_GET_PARENT_DIRECTORY 13
+#define SYSCALL_REMOVE_FILE 14
 
 
 namespace labels is map;
@@ -530,6 +532,8 @@ public namespace assembler {
                         case SYSCALL_GET_ABSOLUTE_PATH -> registers[15] = state::getAbsolutePath(registers[15]);
                         case SYSCALL_FILE_IS_DIRECTORY -> e = fs::isDirectory(registers[15]);
                         case SYSCALL_NEW_LINE -> wol("");
+                        case SYSCALL_GET_PARENT_DIRECTORY -> registers[15] = fs::getParentDirectory(registers[15]);
+                        case SYSCALL_REMOVE_FILE -> fs::removeFile(registers[15]);
                     }
                 }
                 case MOV -> {
@@ -662,6 +666,8 @@ public namespace assembler {
         labels::put("GET_ABSOLUTE_PATH", SYSCALL_GET_ABSOLUTE_PATH);
         labels::put("FILE_IS_DIRECTORY", SYSCALL_FILE_IS_DIRECTORY);
         labels::put("NEW_LINE", SYSCALL_NEW_LINE);
+        labels::put("GET_PARENT_DIRECTORY", SYSCALL_GET_PARENT_DIRECTORY);
+        labels::put("REMOVE_FILE", SYSCALL_REMOVE_FILE);
 
         labels::put("STACK_START", STACK_START);
         labels::put("FILES_START", FILES_START);
@@ -674,6 +680,8 @@ public namespace assembler {
         labels::put("ARGS_END", ARGS_END);
 
         labels::put("ARGS_LENGTH", ARGS_LENGTH);
+        for (i from 0 to 10)
+            labels::put("ARG_"..i, i + ARGS_START);
 
         for (i from 0 to 16)
             labels::put("R"..i, i);

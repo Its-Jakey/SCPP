@@ -57,6 +57,10 @@ public class VMGraphics {
                     g2d.drawLine(x0, y0, x1, y1);
                 }
                 case "fillRect" -> g2d.fillRect(getNextInt(), getNextInt(), getNextInt(), getNextInt());
+                case "fillCircle" -> {
+                    int x0 = getNextInt(), y0 = getNextInt(), d = getNextInt();
+                    g2d.fillOval(x0, y0, d, d);
+                }
                 case "writeString" -> {
                     String toWrite = getNext();
 

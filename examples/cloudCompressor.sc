@@ -4,16 +4,16 @@
 
 namespace cloudCompressor {
     public func main() {
-        var inputMsg = input::ask("Input");
-        println("Input message: ", inputMsg);
+        var inputMsg = input::ask("Input: ");
+        println("Input message:        ", inputMsg);
 
         var encodedInput = cloud::encode(inputMsg);
-        println("Encoded message: ", encodedInput);
+        println("Encoded message:      ", encodedInput);
 
-        var compressedInput = cloud::compress(encodedInput, 99);
-        println("Compressed message: ", compressedInput);
+        var compressedInput = cloud::compress(encodedInput, 99, 2, 2);
+        println("Compressed message:   ", compressedInput);
 
-        var decompressedInput = cloud::decompress(compressedInput, 99);
+        var decompressedInput = cloud::decompress(compressedInput, 99, 2, 2);
         println("Decompressed message: ", decompressedInput);
 
         var decodedInput = cloud::decode(decompressedInput);

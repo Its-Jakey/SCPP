@@ -26,6 +26,12 @@ public namespace arrays {
         return ret;
     }
 
+    public func addToArray(array, size, value) {
+        var ret = resizeArray(array, size, size + 1);
+        ret[size] = value;
+        return ret;
+    }
+
     public func copyTo(array, newArray, len) {
         for (i from 0 to len)
             newArray[i] = array[i];

@@ -1,5 +1,6 @@
-package compiler.optimizer;
+package slvm.optimizer;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class Optimizer {
@@ -12,10 +13,11 @@ public class Optimizer {
         return String.valueOf(vars.size() - 1);
     }
 
-    public static String[] optimize(String[] assembledInstructions) {
+    public static String[] optimize(String[] assembledInstructions_) {
         vars = new HashMap<>();
 
-        String[] ret = new String[assembledInstructions.length];
+        String[] ret = new String[assembledInstructions_.length];
+        String[] assembledInstructions = Arrays.stream(assembledInstructions_).map(inst -> inst.substring(1, inst.length() - 1)).toArray(String[]::new);
 
         for (int i = 0; i < assembledInstructions.length; i++) {
             String instruction = assembledInstructions[i];
@@ -379,6 +381,30 @@ public class Optimizer {
                     ret[i] = assembledInstructions[i];
                 }
                 case "stackJoin" -> ret[i] = "stackJoin";
+                case "fillCircle" -> {
+                    ret[i++] = "fillCircle";
+                    ret[i] = handleVar(assembledInstructions[i]);
+                    ret[i + 1] = handleVar(assembledInstructions[i + 1]);
+                    ret[i + 2] = handleVar(assembledInstructions[i + 2]);
+                    i += 2;
+                }
+                case "playSound" -> {
+                    ret[i++] = "playSound";
+                    ret[i] = handleVar(assembledInstructions[i]);
+                }
+                case "startSound" -> {
+                    ret[i++] = "startSound";
+                    ret[i] = handleVar(assembledInstructions[i]);
+                }
+                case "stopSounds" -> ret[i] = "stopSounds";
+                case "setVolume" -> {
+                    ret[i++] = "setVolume";
+                    ret[i] = handleVar(assembledInstructions[i]);
+                }
+                case "setPitch" -> {
+                    ret[i++] = "setPitch";
+                    ret[i] = handleVar(assembledInstructions[i]);
+                }
                 default -> throw new IllegalStateException("Unknown instruction: " + instruction + ", at pc: " + i);
             }
         }

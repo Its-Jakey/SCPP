@@ -38,4 +38,7 @@ public namespace graphics {
     public func goto(x, y) {
         _asm_("goto", x, y);
     }
+    public func fillCircle(x, y, diameter) {
+        _asm_("fillCircle", x, y, diameter);
+    }
 }

@@ -4,7 +4,7 @@ import antlr.SCPPLexer;
 import antlr.SCPPListener;
 import antlr.SCPPParser;
 import compiler.memory.*;
-import compiler.optimizer.Assembler;
+import slvm.optimizer.Assembler;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.*;
@@ -34,6 +35,7 @@ public class Compiler implements SCPPListener {
     static Stack<Switch> switches;
     public static Path topLevelPath;
     static Stack<List<String>> scopes;
+    public static HashMap<Integer, Position> PCLines = new HashMap<>();
 
     public static String getPrefixMessage() {
         return currentProgram.fileName + " " + row + ":" + col;
@@ -65,7 +67,11 @@ public class Compiler implements SCPPListener {
     private Program getLibrary(String lib) {
         if (!compiledLibraries.containsKey(lib)) {
             try {
-                compiledLibraries.put(lib, compileProgramFromString(CharStreams.fromReader(new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/" + lib + ".sc"))))), 0, lib + ".sc"));
+                final InputStream res = getClass().getResourceAsStream("/" + lib + ".sc");
+                if (res == null)
+                    errorAndKill("Unknown library <" + lib + ">");
+                else
+                    compiledLibraries.put(lib, compileProgramFromString(CharStreams.fromReader(new BufferedReader(new InputStreamReader(res))), 0, lib + ".sc"));
             } catch (IOException e) {
                 errorAndKill(e.toString());
             }
@@ -179,6 +185,8 @@ public class Compiler implements SCPPListener {
     }
 
     public static void appendLine(Object line) {
+        if (currentProgram != null)
+            PCLines.put(output.toString().split("\n").length, new Position(row, currentProgram.realFileName));
         output.append("\n").append(line);
     }
 

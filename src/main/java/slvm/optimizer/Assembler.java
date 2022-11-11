@@ -1,4 +1,4 @@
-package compiler.optimizer;
+package slvm.optimizer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,11 +18,11 @@ public class Assembler {
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
 
-            if (line.startsWith(":") && !lines[i - 1].equals("ldi"))
+            if (line.startsWith(":") && !(i > 0 && (lines[i - 1].equals("ldi") || lines[i - 1].equals("stackPushI")))) {
                 labels.put(line.substring(1), line_n);
-            else if (!line.startsWith("---#")) {
+            } else if (!line.startsWith("---#")) {
                 line_n++;
-                ret.append("\n").append(line);
+                ret.append("\n\"").append(line.replaceAll("\"", "\"\"")).append("\"");
             }
         }
         String tmp;

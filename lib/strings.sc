@@ -113,4 +113,16 @@ public namespace strings {
         }
         return ret;
     }
+
+    public func replaceCharAt(text, pos, newChar) {
+        var ret = "";
+
+        for (i from 0 to pos - 1)
+            ret ..= charAt(text, i);
+        ret ..= newChar;
+
+        for (i from pos + 1 to sizeOf(text))
+            ret ..= charAt(text, i);
+        return ret;
+    }
 }

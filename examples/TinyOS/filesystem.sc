@@ -36,6 +36,14 @@ public namespace file {
         return {name, isDirectory, children, childrenCount, data};
     }
 
+    public func removeChild(index) {
+        free(children[index], fileSize);
+
+        for (i from index to childrenCount - 1)
+            children[i] = children[i + 1];
+        childrenCount--;
+    }
+
     public func unpack(file) {
         name = file[0];
         isDirectory = file[1];
@@ -105,12 +113,40 @@ public namespace fs {
         }
     }
 
+    public func removeFile(path) {
+        var files = strings::split(path, "/");
+        var parentPath = arrays::join(arrays::createSubArray(files, 0, strings::splitSize - 1), strings::splitSize - 1, "/");
+        var name = files[strings::splitSize - 1];
+
+        var parent = getFile(parentPath);
+        var fileIndex = -1;
+
+        file::unpack(parent);
+        for (i from 0 to file::childrenCount) {
+            var child = file::children[i];
+
+            if (child[0] == name) {
+                fileIndex = i;
+                i = 99999;
+            }
+        }
+        if (fileIndex != -1) {
+            file::removeChild(fileIndex);
+            arrays::copyTo(file::pack(), parent, file::fileSize);
+        }
+    }
+
     public func createFile(path_) {
         var files = strings::split(path_, "/");
         var path = arrays::join(arrays::createSubArray(files, 0, strings::splitSize - 1), strings::splitSize - 1, "/");
         var name = files[strings::splitSize - 1];
 
         createFile(path, name);
+    }
+
+    public func getParentDirectory(path) {
+        var files = strings::split(path, "/");
+        return arrays::join(arrays::createSubArray(files, 0, strings::splitSize - 1), strings::splitSize - 1, "/");
     }
 
     public func isDirectory(path) {

@@ -1,35 +1,29 @@
+
 ; Check that there is at least 1 argument
 LD @R0 @ARGS_LENGTH
 LDI @R1 1
 CMP @R0 @R1
 JNZ @ARGS_ERROR
 
-; Make sure the path is not a directory
-LD @R15 @ARG_0
+; Verify that the argument is a valid path
+LD @R15 @ARGS_START
 SYSCALL @GET_ABSOLUTE_PATH
 MOV @R0 @R15
+SYSCALL @FILE_EXISTS
+JNE @PATH_ERROR
+
+; Make sure the path is not a directory
+MOV @R15 @R0
 SYSCALL @FILE_IS_DIRECTORY
 JE @PATH_ERROR
 
-; Verify that the file does not allready exist
+; Remove the file
 MOV @R15 @R0
-SYSCALL @FILE_EXISTS
-JE @PATH_EXISTS_ERROR
-
-; Create the file
-MOV @R15 @R0
-SYSCALL @CREATE_FILE
+SYSCALL @REMOVE_FILE
 HLT
 
 :ARGS_ERROR
 LDI @R15 'Invalid argument count'
-SYSCALL @PRINT_STRING
-HLT
-
-:PATH_EXISTS_ERROR
-LDI @R15 'Duplicate file: '
-LD @R0 @ARGS_START
-CON @R15 @R0
 SYSCALL @PRINT_STRING
 HLT
 

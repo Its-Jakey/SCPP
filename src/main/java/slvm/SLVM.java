@@ -1,35 +1,35 @@
 package slvm;
 
 import compiler.Console;
-import compiler.optimizer.Optimizer;
+import slvm.optimizer.Optimizer;
 import org.apache.commons.text.StringEscapeUtils;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.*;
 
 public class SLVM {
-    private final String[] instructions;
-    private final String[] ram = new String[0xFFFFFFF];
+    private final String[] instructions, ram = new String[0xFFFFFFF];
     private final int[] variables = new int[0xFFFFF];
     private final boolean[] usedAddresses = new boolean[ram.length];
     int pc;
     private String a;
     private boolean isMouseDown;
     private final List<Integer> keysPressed;
-    private final Stack<Integer> stack;
+    public final Stack<Integer> stack;
     private final VarStack varStack;
     private final boolean running;
     private final List<String> buffer;
@@ -37,9 +37,10 @@ public class SLVM {
     private JPanel panel;
     private long runStart;
     private final BufferedImage image;
-    String $fileName = null, $line = "0";
     private Point lastKnownMousePosition = new Point(0, 0);
+    private final Sound sounds;
     //static List<Metadata> metadata;
+    private String[] cloudVars = {"", "", "", "", "", "", "", "", "", ""};
 
     private double getIntValue(String value) {
         try {
@@ -115,7 +116,8 @@ public class SLVM {
         throw new VMException("Could not allocate " + words + " words because there is no free memory", this);
     }
     private String getNextVarValue() {
-        return ram[getVar(getNext())];
+        String value = ram[getVar(getNext())];
+        return isInt(value) && getIntValue(value) % 1 == 0 && value.contains(".") ? value.substring(0, value.lastIndexOf(".")) : value;
     }
 
     private void setNextVarValue(String value) {
@@ -156,7 +158,7 @@ public class SLVM {
     private boolean isEqual(String a, String b) {
         if (isInt(a) && isInt(b))
             return getIntValue(a) == getIntValue(b);
-        return a.equals(b);
+        return a.equalsIgnoreCase(b);
     }
 
     private int mapKey(String key) {
@@ -174,7 +176,6 @@ public class SLVM {
     }
 
     private JFrame frame;
-    static List<Integer> subroutines;
 
 
     public SLVM(String[] program) {
@@ -186,7 +187,7 @@ public class SLVM {
         this.graphics = new VMGraphics();
         this.keysPressed = new ArrayList<>();
         this.image = new BufferedImage(480, 360, BufferedImage.TYPE_INT_RGB);
-        subroutines = new ArrayList<>();
+        this.sounds = new Sound();
 
         Arrays.fill(variables, -1);
 
@@ -234,13 +235,16 @@ public class SLVM {
         //Arrays.fill(ram, "");
 
         runStart = System.currentTimeMillis();
-        while (running)
-            execute(instructions[pc++]);
+        while (running) {
+            try {
+                execute(instructions[pc++]);
+            } catch (RuntimeException e) {
+                throw new VMException(e.toString(), this);
+            }
+        }
     }
 
-    private void execute(String instruction) throws NoSuchAlgorithmException {
-        if (instruction == null)
-            System.out.println("Null instruction at pc " + pc);
+    private void execute(String instruction) {
 
         switch (instruction) {
             case "ldi" -> a = StringEscapeUtils.unescapeJava(getNext());
@@ -249,14 +253,9 @@ public class SLVM {
             case "jts" -> {
                 stack.push(pc + 1);
                 pc = (int) getNextInt();
-                subroutines.add(pc);
-                //metadata.add(new Metadata(fileName, line));
+                //System.out.println("JTS: " + pc);
             }
-            case "ret" -> {
-                pc = stack.pop();
-                subroutines.remove(subroutines.size() - 1);
-                //metadata.remove(metadata.size() - 1);
-            }
+            case "ret" -> pc = stack.pop();
             case "addWithVar" -> a = getInt(getIntValue(a) + getNextIntVar());
             case "subWithVar" -> a = getInt(getIntValue(a) - getIntValue(getNextVarValue()));
             case "mulWithVar" -> a = getInt(getIntValue(a) * getIntValue(getNextVarValue()));
@@ -290,17 +289,9 @@ public class SLVM {
             case "smallerThanWithVar" -> a = getBool(getIntValue(a) < getIntValue(getNextVarValue()));
             case "largerThanWithVar" -> a = getBool(getIntValue(a) > getIntValue(getNextVarValue()));
             case "putPixel" -> buffer.addAll(List.of("putPixel", getNextVarValue(), getNextVarValue()));
-            case "putLine" -> {
-                String x0 = getNextVarValue(), y0 = getNextVarValue(), x1 = getNextVarValue(), y1 = getNextVarValue();
-                //Console.out.println("Draw line from " + x0 + ", " + y0 + " to " + x1 + ", " + y1);
-                buffer.addAll(List.of("drawLine", x0, y0, x1, y1));
-            }
+            case "putLine" -> buffer.addAll(List.of("drawLine", getNextVarValue(), getNextVarValue(), getNextVarValue(), getNextVarValue()));
             case "putRect" -> buffer.addAll(List.of("fillRect", getNextVarValue(), getNextVarValue(), getNextVarValue(), getNextVarValue()));
-            case "setColor" -> {
-                String color = getNextVarValue();
-                //Console.out.println("setColor " + color);
-                buffer.addAll(List.of("setColor", color));
-            }
+            case "setColor" -> buffer.addAll(List.of("setColor", getNextVarValue()));
             case "clg" -> buffer.clear();
             case "done" -> Thread.currentThread().stop();
             case "malloc" -> a = String.valueOf(allocateMemory((int) getNextIntVar()));
@@ -348,16 +339,26 @@ public class SLVM {
             }
             case "sleep" -> {
                 try {
-                    Thread.sleep((long) getIntValue(getNextVarValue()));
-                } catch (IllegalArgumentException ignored){}
-                catch (Exception e) {
+                    double time = getIntValue(getNextVarValue());
+                    if (time % 1 == 0)
+                        Thread.sleep((long) time);
+                    else
+                        Thread.sleep((long) time, (int) ((time % 1) * 1000));
+                } catch (InterruptedException e) {
                     throw new RuntimeException(e);
+                } catch (IllegalArgumentException ignored) {
+
                 }
             }
             case "drawText" -> buffer.addAll(List.of("writeString", getNextVarValue()));
             case "loadAtVarWithOffset" -> a = ram[(int) (getVar(getNext()) + getIntValue(getNextVarValue()))];
             case "storeAtVarWithOffset" -> ram[(int) (getVar(getNext()) + getIntValue(getNextVarValue()))] = a;
-            case "isKeyPressed" -> a = getBool(keysPressed.contains(mapKey(getNextVarValue())));
+            case "isKeyPressed" -> {
+                if (!frame.isVisible())
+                    frame.setVisible(true);
+
+                a = getBool(keysPressed.contains(mapKey(getNextVarValue())));
+            }
             case "createColor" -> a = String.valueOf(new Color((int) getNextIntVar(), (int) getNextIntVar(), (int) getNextIntVar()).getRGB());
             case "charAt" -> {
                 //String str = StringEscapeUtils.unescapeJava(getNextVarValue());
@@ -382,7 +383,9 @@ public class SLVM {
                 ram[addr] = getInt(getIntValue(ram[addr]) - 1);
             }
             case "graphicsFlip" -> {
-                frame.setVisible(true);
+                if (!frame.isVisible())
+                    frame.setVisible(true);
+
                 graphics.process(buffer, image.createGraphics(), this);
                 panel.repaint();
             }
@@ -391,8 +394,24 @@ public class SLVM {
                 Console.out.print(getNextVarValue());
                 a = new Scanner(System.in).nextLine();
             }
-            case "setCloudVar", "getCloudVar" -> {}
-            case "indexOfChar" -> a = String.valueOf(getNextVarValue().indexOf(getNextVarValue().charAt(0)));
+            case "setCloudVar" -> {
+                String name = getNextVarValue();
+                String value = getNextVarValue();
+
+                try {
+                    cloudVars[Integer.parseInt(name)] = value;
+                } catch (NumberFormatException ignored) {}
+            }
+            case "getCloudVar" -> {
+                String name = getNextVarValue();
+
+                try {
+                    a = cloudVars[Integer.parseInt(name)];
+                } catch (NumberFormatException e) {
+                    a = "";
+                }
+            }
+            case "indexOfChar" -> a = String.valueOf(getNextVarValue().toLowerCase().indexOf(getNextVarValue().toLowerCase().charAt(0)));
             case "goto" -> buffer.addAll(List.of("goto", getNextVarValue(), getNextVarValue()));
             case "imalloc" -> {
                 int words = (int) getNextInt();
@@ -493,23 +512,16 @@ public class SLVM {
             }
             case "toAsciiValue" -> a = String.valueOf((int) getNextVarValue().charAt(0));
             case "fromAsciiValue" -> a = String.valueOf((char) getNextIntVar());
-            case "$sha" -> a = bytesToHex(MessageDigest.getInstance("SHA-256").digest(getNextVarValue().getBytes(StandardCharsets.UTF_8))); //Don't implement this in other versions of the VM
             case "random" -> a = String.valueOf(Math.random());
             case "stackPushI" -> varStack.push(getNext());
             case "stackJoin" -> varStack.push(varStack.swapPop() + varStack.pop());
+            case "fillCircle" -> buffer.addAll(List.of("fillCircle", getNextVarValue(), getNextVarValue(), getNextVarValue()));
+            case "playSound" -> sounds.playSound(getNextVarValue());
+            case "startSound" -> sounds.startSound(getNextVarValue());
+            case "stopSounds" -> sounds.stopSounds();
+            case "setPitch" -> sounds.setPitch((float) getNextIntVar());
+            case "setVolume" -> sounds.setVolume((float) getNextIntVar());
             default -> throw new VMException("Unknown instruction '" + instruction + "'", this);
         }
-    }
-
-    private static String bytesToHex(byte[] hash) {
-        StringBuilder hexString = new StringBuilder(2 * hash.length);
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
     }
 }

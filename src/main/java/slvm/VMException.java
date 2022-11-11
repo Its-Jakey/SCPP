@@ -1,13 +1,31 @@
 package slvm;
 
+import compiler.Compiler;
+
 public class VMException extends RuntimeException {
 
-    public void printSubroutines() {
-        for (int i = SLVM.subroutines.size() - 1; i >= 0; i--) {
-            System.out.println(SLVM.subroutines.get(i));
-        }
-    }
     public VMException(String msg, SLVM vm) {
-        super(msg + ", at pc " + vm.pc);
+        super(msg + "\n    at pc " + vm.pc + " (near " + getLine(vm.pc) + ")" + stackTrace(vm));
+    }
+
+    private static String stackTrace(SLVM vm) {
+        StringBuilder ret = new StringBuilder();
+
+        for (Integer pc : vm.stack.stream().toList()) {
+            ret.append("\n    at pc ").append(pc).append(" (near ").append(getLine(pc)).append(")");
+        }
+        return ret.toString();
+    }
+
+    private static String getLine(int pc) {
+        int tmp = pc;
+
+        while (Compiler.PCLines.get(tmp) == null)
+            tmp--;
+        return Compiler.PCLines.get(tmp).file() + ":" + Compiler.PCLines.get(tmp).line();
+    }
+
+    public VMException(String msg) {
+        super(msg);
     }
 }

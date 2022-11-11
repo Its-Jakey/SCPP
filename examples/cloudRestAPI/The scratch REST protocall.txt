@@ -1,0 +1,11 @@
+Cloud vars:
+    1: status
+    2-9: data
+
+status digit 0 is 0 if the server is ready to take a request, 1 if the server is busy
+status digit 1 is 0 if the data was recived/sent correctly, 1 if the data needs to be resent
+status digit 2 and 3 is the current packet peice being sent/recived
+status digit 4 and 5 is the amount of packet peices to be sent/recived
+status digit 6 and 7 is the client ID
+
+the message is encoded to base10 then compressed with a word and repeat size of 2, then is split into groups of 256 digits and put into the cloud vars
